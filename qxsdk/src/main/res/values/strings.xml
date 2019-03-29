@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">QXSDK</string>
+    <string name="msgtype_desc_login">login</string>
 </resources>

@@ -8,9 +8,21 @@ import java.util.Arrays;
  */
 public class BaseData {
 
-    private byte[] dataArr;
-
     private CommunicationMode communicationMode;
+
+    private byte[] data;
+
+    public byte[] getData() {
+        return data;
+    }
+
+    public void setData(byte[] data) {
+        this.data = data;
+    }
+
+    public BaseData(byte[] data) {
+        this.data = data;
+    }
 
     public void initUDPSendType() {
         communicationMode = CommunicationMode.UDP;
@@ -29,22 +41,4 @@ public class BaseData {
     }
 
 
-    @Override
-    public String toString() {
-        return "BaseData{" +
-                "dataArr=" + Arrays.toString(dataArr) +
-                '}';
-    }
-
-    public byte[] getDataArr() {
-        return dataArr;
-    }
-
-    public void setDataArr(byte[] dataArr) {
-        this.dataArr = dataArr;
-    }
-
-    public BaseData(byte[] dataArr) {
-        this.dataArr = dataArr;
-    }
 }

@@ -234,14 +234,11 @@ public class DeviceInfoManager {
             //获取wifimac
             mac = getWifiMac(context);
             if (!TextUtils.isEmpty(mac)) {
-                Log.i("info", "MAC地址为 ：" + mac);
                 return mac;
             } else {
-                Log.i("info", "MAC地址为 ：" + mac);
                 return "";
             }
         } else {
-            Log.i("info", "MAC地址为 ：" + mac);
             return mac;
         }
 

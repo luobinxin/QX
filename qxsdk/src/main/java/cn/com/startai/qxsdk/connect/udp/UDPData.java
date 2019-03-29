@@ -1,7 +1,5 @@
 package cn.com.startai.qxsdk.connect.udp;
 
-import java.net.DatagramPacket;
-
 import cn.com.startai.qxsdk.connect.BaseData;
 
 /**
@@ -10,22 +8,30 @@ import cn.com.startai.qxsdk.connect.BaseData;
  */
 public class UDPData extends BaseData {
 
+
     private String ip;
     private int port;
 
-    public UDPData(byte[] dataArr, String ip, int port) {
-        super(dataArr);
-        this.ip = ip;
+    public UDPData(byte[] data, int port) {
+        super(data);
         this.port = port;
     }
 
+    public UDPData(byte[] data) {
+        super(data);
+    }
 
+    public UDPData(byte[] data, String ip, int port) {
+        super(data);
+        this.ip = ip;
+        this.port = port;
+    }
 
     @Override
     public String toString() {
         return "UDPData{" +
                 "ip='" + ip + '\'' +
-                ", port='" + port + '\'' +
+                ", port=" + port +
                 '}';
     }
 

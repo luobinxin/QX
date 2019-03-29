@@ -5,8 +5,11 @@ package cn.com.startai.qxsdk.global;
  * 419109715@qq.com 彬影
  */
 public class QXError extends QXErrorCode {
-    private String errcode;
-    private String errmsg;
+    protected String errcode;
+    protected String errmsg;
+
+    public QXError() {
+    }
 
     public QXError(String errcode) {
         this.errcode = errcode;

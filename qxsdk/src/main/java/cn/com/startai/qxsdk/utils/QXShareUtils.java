@@ -15,12 +15,14 @@ public class QXShareUtils {
 
     private static String SP_NAME = "qx";
     private static SharedPreferences sp;
+    private static SharedPreferences.Editor editor;
 
 
     private static void init() {
         if (sp == null) {
-            Context context = QX.getApp();
+            Context context = QX.getInstance().getApp();
             sp = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
+            editor = sp.edit();
         }
     }
 
@@ -30,27 +32,27 @@ public class QXShareUtils {
 
     public static void putInt(String key, int value) {
         init();
-        sp.edit().putInt(key, value).apply();
+        editor.putInt(key, value).apply();
     }
 
     public static void putBoolean(String key, boolean value) {
         init();
-        sp.edit().putBoolean(key, value).apply();
+        editor.putBoolean(key, value).apply();
     }
 
     public static void putFloat(String key, float value) {
         init();
-        sp.edit().putFloat(key, value).apply();
+        editor.putFloat(key, value).apply();
     }
 
     public static void putLong(String key, long value) {
         init();
-        sp.edit().putLong(key, value).apply();
+        editor.putLong(key, value).apply();
     }
 
     public static void putString(String key, String value) {
         init();
-        sp.edit().putString(key, value).apply();
+        editor.putString(key, value).apply();
     }
 
 

@@ -7,4 +7,5 @@ import cn.com.startai.qxsdk.connect.mqtt.event.IQxMqttListener;
  * 419109715@qq.com 彬影
  */
 public interface IQXListener extends IQxMqttListener {
+
 }

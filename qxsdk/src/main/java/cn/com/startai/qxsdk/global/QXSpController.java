@@ -1,8 +1,16 @@
 package cn.com.startai.qxsdk.global;
 
+import android.text.TextUtils;
+
 import cn.com.startai.qxsdk.QX;
+import cn.com.startai.qxsdk.busi.entity.BrokerHost;
 import cn.com.startai.qxsdk.connect.mqtt.client.QXMqttConfig;
+import cn.com.startai.qxsdk.utils.QXJsonUtils;
+import cn.com.startai.qxsdk.utils.QXLog;
 import cn.com.startai.qxsdk.utils.QXShareUtils;
+import cn.com.startai.qxsdk.utils.area.AreaLocation;
+
+import static cn.com.startai.qxsdk.QX.TAG;
 
 
 /**
@@ -21,7 +29,7 @@ public class QXSpController {
      *
      * @return
      */
-    public static long getLastGet_0x800_respTime() {
+    public static long getLastGetBrokerHostrespTime() {
 
         long aLong = QXShareUtils.getLong(SP_LASTGET_0X800_TIME, 0);
 
@@ -67,74 +75,74 @@ public class QXSpController {
 
     private static final String SP_LOCATION = "SP_LOCATION";
 
-//    /**
-//     * 获取上次同步 0x8000的时间
-//     *
-//     * @return
-//     */
-//    public static AreaLocation getLocation() {
-//
-//        String str = QXShareUtils.getString(SP_LOCATION, "");
-//        if (TextUtils.isEmpty(str)) {
-//            return null;
-//        }
-//        return SJsonUtils.fromJson(str, AreaLocation.class);
-//    }
-//
-//    /**
-//     * 保存此次同步节点的时间
-//     *
-//     * @param areaLocation
-//     */
-//    public static void setLocation(AreaLocation areaLocation) {
-//        if (areaLocation == null) {
-//
-//            QXShareUtils.putString(SP_LOCATION, "");
-//        } else {
-//            QXShareUtils.putString(SP_LOCATION, SJsonUtils.toJson(areaLocation));
-//        }
-//
-//    }
-//
-//
-//    private static final String SP_AREA_NODE = "SP_AREA_NODE";
-//
-//    /**
-//     * 查所有
-//     *
-//     * @return
-//     */
-//    public static C_0x8000.Resp.ContentBean getAllAreaNodeBean() {
-//
-//        String s = QXShareUtils.getString(SP_AREA_NODE, "");
-//        if (TextUtils.isEmpty(s)) {
-//            return null;
-//        } else {
-//            C_0x8000.Resp.ContentBean contentBean = SJsonUtils.fromJson(s, C_0x8000.Resp.ContentBean.class);
-//            if (contentBean == null) {
-//                return null;
-//            } else {
-//                if (contentBean.getNode() == null || contentBean.getNode().size() == 0) {
-//                    return null;
-//                }
-//            }
-//            return SJsonUtils.fromJson(s, C_0x8000.Resp.ContentBean.class);
-//        }
-//    }
-//
-//    /**
-//     * 保存0x8000区域节点信息
-//     *
-//     * @param contentBean
-//     */
-//    public static void saveAreaNodeBeans(C_0x8000.Resp.ContentBean contentBean) {
-//        if (contentBean == null) {
-//            QXShareUtils.putString(SP_AREA_NODE, "");
-//            return;
-//        }
-//        String s = SJsonUtils.toJson(contentBean);
-//        QXShareUtils.putString(SP_AREA_NODE, s);
-//    }
+    /**
+     * 获取上次同步 0x8000的时间
+     *
+     * @return
+     */
+    public static AreaLocation getLocation() {
+
+        String str = QXShareUtils.getString(SP_LOCATION, "");
+        if (TextUtils.isEmpty(str)) {
+            return null;
+        }
+        return QXJsonUtils.fromJson(str, AreaLocation.class);
+    }
+
+    /**
+     * 保存此次同步节点的时间
+     *
+     * @param areaLocation
+     */
+    public static void setLocation(AreaLocation areaLocation) {
+        if (areaLocation == null) {
+
+            QXShareUtils.putString(SP_LOCATION, "");
+        } else {
+            QXShareUtils.putString(SP_LOCATION, QXJsonUtils.toJson(areaLocation));
+        }
+
+    }
+
+
+    private static final String SP_AREA_NODE = "SP_AREA_NODE";
+
+    /**
+     * 查所有
+     *
+     * @return
+     */
+    public static BrokerHost.Resp.ContentBean getAllAreaNodeBean() {
+
+        String s = QXShareUtils.getString(SP_AREA_NODE, "");
+        if (TextUtils.isEmpty(s)) {
+            return null;
+        } else {
+            BrokerHost.Resp.ContentBean contentBean = QXJsonUtils.fromJson(s, BrokerHost.Resp.ContentBean.class);
+            if (contentBean == null) {
+                return null;
+            } else {
+                if (contentBean.getNode() == null || contentBean.getNode().size() == 0) {
+                    return null;
+                }
+            }
+            return QXJsonUtils.fromJson(s, BrokerHost.Resp.ContentBean.class);
+        }
+    }
+
+    /**
+     * 保存0x8000区域节点信息
+     *
+     * @param contentBean
+     */
+    public static void setAreaNodeBeans(BrokerHost.Resp.ContentBean contentBean) {
+        if (contentBean == null) {
+            QXShareUtils.putString(SP_AREA_NODE, "");
+            return;
+        }
+        String s = QXJsonUtils.toJson(contentBean);
+        QXShareUtils.putString(SP_AREA_NODE, s);
+    }
 
 
     private static final String SP_CLIENTID = "SP_CLIENTID";
@@ -165,14 +173,15 @@ public class QXSpController {
      */
     public static boolean getIsActivite() {
         //如果appid变化了会重新激活
-        return QXShareUtils.getBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getApp()), false);
+        boolean aBoolean = QXShareUtils.getBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), false);
+        return aBoolean;
     }
 
     /**
      * 保存激活状态
      */
     public static void setIsActivite(boolean isActivite) {
-        QXShareUtils.putBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getApp()), isActivite);
+        QXShareUtils.putBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), isActivite);
     }
 
 

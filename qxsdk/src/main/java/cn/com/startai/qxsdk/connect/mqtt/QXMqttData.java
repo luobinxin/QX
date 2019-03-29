@@ -10,12 +10,8 @@ public class QXMqttData extends BaseData {
 
     private String topic;
 
-    public QXMqttData(byte[] dataArr) {
-        super(dataArr);
-    }
-
-    public QXMqttData(byte[] dataArr, String topic) {
-        super(dataArr);
+    public QXMqttData(byte[] data, String topic) {
+        super(data);
         this.topic = topic;
     }
 

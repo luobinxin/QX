@@ -7,6 +7,8 @@ import java.util.Comparator;
 import cn.com.startai.qxsdk.connect.mqtt.client.QXMqttConfig;
 import cn.com.startai.qxsdk.utils.QXLog;
 
+import static cn.com.startai.qxsdk.QX.TAG;
+
 
 /**
  * Created by Robin on 2018/5/8.
@@ -16,7 +18,6 @@ import cn.com.startai.qxsdk.utils.QXLog;
 public class StartaiTimerPingListener implements StartaiTimerPingSender.PingListener {
 
 
-    private String TAG = this.getClass().getSimpleName();
 
     private long t;
 
@@ -82,11 +83,11 @@ public class StartaiTimerPingListener implements StartaiTimerPingSender.PingList
      */
     public void calculationWeight(long delay) {
 
-//        C_0x8000.Resp.ContentBean areaNodeBeans = GlobalVariable.areaNodeBean;
+//        C_0x8000.LoginResp.ContentBean areaNodeBeans = GlobalVariable.areaNodeBean;
 //
 //        if (areaNodeBeans != null && areaNodeBeans.getNode().size() != 0) {
-//            List<C_0x8000.Resp.ContentBean.NodeBean> nodes = areaNodeBeans.getNode();
-//            for (C_0x8000.Resp.ContentBean.NodeBean nodeBean : nodes) {
+//            List<C_0x8000.LoginResp.ContentBean.NodeBean> nodes = areaNodeBeans.getNode();
+//            for (C_0x8000.LoginResp.ContentBean.NodeBean nodeBean : nodes) {
 //                //当前的节点
 //                String host = QX.getQxMqtt().getClient().getServerURI();
 //

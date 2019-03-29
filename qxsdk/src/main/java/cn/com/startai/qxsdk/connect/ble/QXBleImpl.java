@@ -1,10 +1,7 @@
 package cn.com.startai.qxsdk.connect.ble;
 
-import cn.com.startai.qxsdk.QX;
-import cn.com.startai.qxsdk.connect.BaseData;
-import cn.com.startai.qxsdk.connect.IConnectListener;
-import cn.com.startai.qxsdk.connect.mqtt.IQXMqtt;
-import cn.com.startai.qxsdk.connect.udp.QXUDPImpl;
+import cn.com.startai.qxsdk.connect.udp.client.QXUDPImpl;
+import cn.com.startai.qxsdk.event.IOnCallListener;
 
 /**
  * Created by Robin on 2019/3/21.
@@ -16,7 +13,7 @@ public class QXBleImpl implements IQXBLE {
     private QXBleImpl() {
     }
 
-    public static void registerInstance() {
+    public static IQXBLE getInstance() {
         if (instance == null) {
             synchronized (QXUDPImpl.class) {
                 if (instance == null) {
@@ -26,7 +23,7 @@ public class QXBleImpl implements IQXBLE {
                 }
             }
         }
-        QX.setQxBle(instance);
+        return instance;
     }
 
 
@@ -40,9 +37,10 @@ public class QXBleImpl implements IQXBLE {
 
     }
 
+
+
     @Override
-    public void doSend(BaseData data) {
+    public void send(BLEData data, IOnCallListener listener) {
 
     }
-
 }

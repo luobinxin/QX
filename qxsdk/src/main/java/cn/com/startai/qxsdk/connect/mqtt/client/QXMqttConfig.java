@@ -14,12 +14,11 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
-import cn.com.startai.qxsdk.QX;
 import cn.com.startai.qxsdk.global.DeviceInfoManager;
 import cn.com.startai.qxsdk.global.QXSpController;
 import cn.com.startai.qxsdk.utils.QXLog;
 
-import static cn.com.startai.qxsdk.connect.mqtt.IQXMqtt.TAG;
+import static cn.com.startai.qxsdk.QX.TAG;
 
 /**
  * Created by Robin on 2019/3/22.

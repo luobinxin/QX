@@ -1,129 +1,116 @@
 package cn.com.startai.qxsdk;
 
 import android.app.Application;
-import android.content.IntentFilter;
-import android.net.ConnectivityManager;
 import android.support.annotation.NonNull;
 
-import cn.com.startai.qxsdk.connect.ble.IQXBLE;
-import cn.com.startai.qxsdk.connect.ble.QXBleImpl;
-import cn.com.startai.qxsdk.connect.mqtt.IQXMqtt;
-import cn.com.startai.qxsdk.connect.mqtt.client.QXMqttImpl;
-import cn.com.startai.qxsdk.connect.udp.IQXUDP;
-import cn.com.startai.qxsdk.connect.udp.QXUDPImpl;
-import cn.com.startai.qxsdk.receiver.QXNetworkReceiver;
+import cn.com.startai.qxsdk.busi.entity.Activate;
+import cn.com.startai.qxsdk.busi.entity.Login;
+import cn.com.startai.qxsdk.connect.BaseData;
+import cn.com.startai.qxsdk.event.IOnCallListener;
+import cn.com.startai.qxsdk.event.IQXBusi;
+import cn.com.startai.qxsdk.event.IQXBusiResultListener;
+import cn.com.startai.qxsdk.global.QXInitParam;
 
 /**
  * Created by Robin on 2019/3/20.
  * 419109715@qq.com 彬影
  */
-public class QX {
+public class QX implements IQXBusi {
 
-    private static boolean isDebug;
-    private static IQXUDP qxUdp;
-    private static IQXMqtt qxMqtt;
-    private static IQXBLE qxBle;
-    private static Application app;
-    private static QXNetworkReceiver networkReceiver;
+    private static QXBusiManager qxBusiManager;
 
-    public static QXNetworkReceiver getNetworkReceiver() {
-        return networkReceiver;
+    public static final String TAG = "QX";
+
+    private QX() {
+        qxBusiManager = QXBusiManager.getInstance();
     }
 
-    public static void setNetworkReceiver(QXNetworkReceiver networkReceiver) {
-        QX.networkReceiver = networkReceiver;
+    private static QX instance;
+
+    public static QX getInstance() {
+        if (instance == null) {
+            instance = new QX();
+        }
+        return instance;
     }
 
-    public static boolean isIsDebug() {
+    private boolean isDebug;
+
+    public Application getApp() {
+        return qxBusiManager.getApp();
+    }
+
+    public void setDebug(boolean isDebug) {
+        this.isDebug = isDebug;
+    }
+
+    public boolean isDebug() {
         return isDebug;
     }
 
-    public static void setIsDebug(boolean isDebug) {
-        QX.isDebug = isDebug;
+    public void init(@NonNull Application app, QXInitParam qxInitParam) {
+
+        qxBusiManager.init(app, qxInitParam);
     }
 
-    public static IQXUDP getQxUdp() {
-        return qxUdp;
+    public void release() {
+        qxBusiManager.release();
     }
 
-    public static void setQxUdp(IQXUDP qxUdp) {
-        QX.qxUdp = qxUdp;
+    public void doSend(BaseData baseData, IOnCallListener listener) {
+        qxBusiManager.doSend(baseData, listener);
     }
 
-    public static IQXMqtt getQxMqtt() {
-        return qxMqtt;
+
+    public IQXBusi getQxBusi() {
+        return qxBusiManager.getQxbusi();
     }
 
-    public static void setQxMqtt(IQXMqtt qxMqtt) {
-        QX.qxMqtt = qxMqtt;
+    public void addListener(IQXBusiResultListener listener) {
+        qxBusiManager.addListener(listener);
     }
 
-    public static IQXBLE getQxBle() {
-        return qxBle;
+    public void removeListener(IQXBusiResultListener listener) {
+        qxBusiManager.removeListener(listener);
     }
 
-    public static void setQxBle(IQXBLE qxBle) {
-        QX.qxBle = qxBle;
+    /**
+     * 局域网设备扫描
+     *
+     * @param timeMillims
+     */
+    @Override
+    public void discovery(long timeMillims) {
+        qxBusiManager.discovery(timeMillims);
     }
 
-    public static Application getApp() {
-        return app;
+    /**
+     * 停止局域网设备扫描
+     */
+    @Override
+    public void stopDiscovery() {
+        qxBusiManager.stopDiscovery();
     }
 
-    public static void setApp(Application app) {
-        QX.app = app;
+    /**
+     * 登录
+     *
+     * @param req
+     * @param callListener
+     */
+    @Override
+    public void login(@NonNull Login.Req req, IOnCallListener callListener) {
+        qxBusiManager.login(req, callListener);
     }
 
-    public static void initUdp(Application app) {
-        setApp(app);
-        QXUDPImpl.registerInstance();
+    /**
+     * 帮第三方设备激活
+     *
+     * @param req
+     * @param callListener
+     */
+    @Override
+    public void hardwareActivate(Activate.Req req, IOnCallListener callListener) {
+        qxBusiManager.hardwareActivate(req, callListener);
     }
-
-    public static void initMqtt(@NonNull Application app, @NonNull String appid) {
-        setApp(app);
-        QXMqttImpl.registerInstance(appid);
-    }
-
-    public static void initBle(Application app) {
-        setApp(app);
-        QXBleImpl.registerInstance();
-    }
-
-    public static void init(@NonNull Application app, @NonNull String appid) {
-        setApp(app);
-        registerNetworkReceiver();
-        initBle(app);
-        initMqtt(app, appid);
-        initUdp(app);
-    }
-
-    public static void release() {
-        if (getApp() != null) {
-            getQxBle().release();
-            getQxMqtt().release();
-            getQxUdp().release();
-            unRegisterNetworkReceiver();
-            setApp(null);
-            networkReceiver = null;
-        }
-    }
-
-    static void registerNetworkReceiver() {
-
-        networkReceiver = new QXNetworkReceiver();
-        IntentFilter filter = new IntentFilter();
-        filter.addAction(ConnectivityManager.CONNECTIVITY_ACTION);
-        Application app = QX.getApp();
-        if (app != null && networkReceiver != null) {
-            app.registerReceiver(networkReceiver, filter);
-        }
-
-    }
-
-    static void unRegisterNetworkReceiver() {
-        if (networkReceiver != null && QX.getApp() != null) {
-            QX.getApp().unregisterReceiver(networkReceiver);
-        }
-    }
-
 }
