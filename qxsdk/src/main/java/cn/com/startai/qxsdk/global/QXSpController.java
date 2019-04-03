@@ -41,7 +41,7 @@ public class QXSpController {
      *
      * @param time
      */
-    public static void setLastGet_0x800_respTime(long time) {
+    public static void setLastGetBrokerHostrespTime(long time) {
 
         QXShareUtils.putLong(SP_LASTGET_0X800_TIME, time);
 

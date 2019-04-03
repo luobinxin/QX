@@ -3,9 +3,7 @@ package cn.com.startai.qxsdk.connect.udp;
 import java.net.DatagramPacket;
 
 import cn.com.startai.qxsdk.connect.IConnectBusi;
-import cn.com.startai.qxsdk.connect.mqtt.event.IQxMqttListener;
-import cn.com.startai.qxsdk.event.IOnCallListener;
-import cn.com.startai.qxsdk.event.IQXListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 
 /**
  * Created by Robin on 2019/3/20.
@@ -13,7 +11,7 @@ import cn.com.startai.qxsdk.event.IQXListener;
  */
 public interface IQXUDP extends IConnectBusi {
 
-    void send(UDPData data, IOnCallListener listener);
+    void send(UDPData data, IQXCallListener listener);
 
     void sendDelay(UDPData data, long delay, long maxDelay);
 

@@ -7,7 +7,6 @@ import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
-import org.eclipse.paho.client.mqttv3.MqttCallbackExtended;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 import org.eclipse.paho.client.mqttv3.MqttException;
 import org.eclipse.paho.client.mqttv3.MqttMessage;
@@ -21,10 +20,10 @@ import cn.com.startai.qxsdk.connect.mqtt.IQXMqtt;
 import cn.com.startai.qxsdk.connect.mqtt.QXMqttConnectState;
 import cn.com.startai.qxsdk.connect.mqtt.QXMqttData;
 import cn.com.startai.qxsdk.connect.mqtt.event.IQxMqttListener;
-import cn.com.startai.qxsdk.connect.mqtt.event.StartaiTimerPingListener;
-import cn.com.startai.qxsdk.connect.mqtt.event.StartaiTimerPingSender;
+import cn.com.startai.qxsdk.connect.mqtt.event.QXTimerPingListener;
+import cn.com.startai.qxsdk.connect.mqtt.event.QXTimerPingSender;
 import cn.com.startai.qxsdk.connect.udp.client.QXUDPImpl;
-import cn.com.startai.qxsdk.event.IOnCallListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.network.IQXNetworkListener;
 import cn.com.startai.qxsdk.global.QXCallbackManager;
 import cn.com.startai.qxsdk.global.QXError;
@@ -47,7 +46,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
     private IMqttAsyncClient client;
 
-    private StartaiTimerPingSender.PingListener pingListener;
+    private QXTimerPingSender.PingListener pingListener;
     private MqttConnectOptions option;
     private IQxMqttListener listener;
 
@@ -65,9 +64,9 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
     private String clientId;
 
 
-    public StartaiTimerPingSender.PingListener getPingListener() {
+    public QXTimerPingSender.PingListener getPingListener() {
         if (pingListener == null) {
-            pingListener = new StartaiTimerPingListener();
+            pingListener = new QXTimerPingListener();
         }
         return pingListener;
     }
@@ -132,12 +131,6 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
     }
 
 
-    public void disAndReconnect() {
-        QXLog.d(TAG, "准备断开连接并重连");
-        disconnect(false);
-        connect();
-    }
-
     private void connect() {
 
         mConnHandler.post(new Runnable() {
@@ -146,13 +139,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
                 try {
 
-                    if (connectState == QXMqttConnectState.DISCONNECTED && QXSpController.getIsActivite()) {
+                    if (connectState == QXMqttConnectState.CONNECTED && QXSpController.getIsActivite()) {
                         //激活成功才回调连接成功
                         callbackConn();
                         return;
                     }
 
-                    if (!QXNetworkManager.getInstance().isAvaliableNetwork()) {
+                    if (!QXNetworkManager.getInstance().isAvaliableNetwork(false)) {
                         QXLog.e(TAG, "network is unvaliable ");
                         connectState = QXMqttConnectState.DISCONNECTED;
                         callbackDisConn(QXError.ERROR_CONN_NET);
@@ -171,13 +164,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                         return;
                     }
 
-                    String host = QXMqttConfig.getHost();
+                    String host = QXMqttConfig.getOptimalHost();
 
 
                     clientId = QXMqttConfig.getClientId();
                     QXLog.d(TAG, "connect host = " + host + " clientid = " + clientId);
-                    StartaiTimerPingSender startaiTimerPingSender = new StartaiTimerPingSender(getPingListener());
-                    client = new MqttAsyncClient(host, clientId, null, startaiTimerPingSender);
+                    QXTimerPingSender QXTimerPingSender = new QXTimerPingSender(getPingListener());
+                    client = new MqttAsyncClient(host, clientId, null, QXTimerPingSender);
                     client.setCallback(mqttCallback);
 
                 } catch (MqttException e) {
@@ -189,10 +182,12 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                 try {
                     client.connect(option).waitForCompletion();
 
-                    QXLog.e(TAG, "connect success");
+                    QXLog.e(TAG, "connect success host = " + client.getServerURI() + " clientid = " + client.getClientId());
                     connectState = QXMqttConnectState.CONNECTED;
                     pingListener.onReset();
                     QXMqttConfig.setClientId(clientId);
+                    QXMqttConfig.setHost(client.getServerURI());
+
                     callbackConn();
 
 
@@ -211,7 +206,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                     QXLog.e(TAG, "连接失败,准备重试 " + returnCount++);
                     //准备重连
                     callbackReConn();
-                    reconnect(2000);
+                    reconnectWithDelay(2000);
 
                 }
 
@@ -222,15 +217,6 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
     }
 
-
-    private void sleepTime(long time) {
-
-        try {
-            Thread.sleep(time);
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
 
     private void disconnect(final boolean inReleaseCall) {
 
@@ -255,7 +241,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
     }
 
     @Override
-    public void publish(final QXMqttData mqttData, final IOnCallListener onCallListener) {
+    public void publish(final QXMqttData mqttData, final IQXCallListener onCallListener) {
         mSendHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -288,50 +274,57 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
 
     @Override
-    public void subscribe(final List<String> topics, final IOnCallListener iOnCallListener) {
+    public void subscribe(final List<String> topics, final IQXCallListener IQXCallListener) {
         mConnHandler.post(new Runnable() {
             @Override
             public void run() {
-
-                if (connectState == QXMqttConnectState.CONNECTED) {
-                    try {
-                        if (topics == null) {
-                            QXLog.e(TAG, "topics must not be null");
-                            QXCallbackManager.callbackCallResult(false, iOnCallListener, QXError.ERROR_SUB_NULL_TOPIC);
-                            return;
-                        }
-
-                        String[] topicArr = new String[topics.size()];
-
-                        topicArr = topics.toArray(topicArr);
-
-
-                        int[] qoss = new int[topics.size()];
-                        for (int i : qoss) {
-                            qoss[i] = 1;
-                        }
-
-                        client.subscribe(topicArr, qoss).waitForCompletion();
-
-                        QXLog.e(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
-                        QXCallbackManager.callbackCallResult(true, iOnCallListener, null);
-                    } catch (MqttException e) {
-                        QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, iOnCallListener, e.getReasonCode() + "", e.getMessage());
-                    } catch (Exception e) {
-                        QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, iOnCallListener, QXError.UNKOWN + "", e.getMessage());
-                    }
-
-                }
-
+                subscribeSync(topics, IQXCallListener);
             }
         });
     }
 
+    @Override
+    public void subscribeSync(List<String> topics, IQXCallListener IQXCallListener) {
+        if (connectState == QXMqttConnectState.CONNECTED) {
+            try {
+                if (topics == null) {
+                    QXLog.e(TAG, "topics must not be null");
+                    QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NULL_TOPIC);
+                    return;
+                }
+
+                String[] topicArr = new String[topics.size()];
+
+                topicArr = topics.toArray(topicArr);
+
+
+                int[] qoss = new int[topics.size()];
+                for (int i : qoss) {
+                    qoss[i] = 1;
+                }
+
+                client.subscribe(topicArr, qoss).waitForCompletion();
+
+                QXLog.e(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
+                QXCallbackManager.callbackCallResult(true, IQXCallListener, null);
+            } catch (MqttException e) {
+                QXLog.e(TAG, "sub topics = " + topics + " failed");
+                QXCallbackManager.callbackCallResult(false, IQXCallListener, e.getReasonCode() + "", e.getMessage());
+            } catch (Exception e) {
+                QXLog.e(TAG, "sub topics = " + topics + " failed");
+                QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.UNKOWN + "", e.getMessage());
+            }
+
+        } else {
+            QXLog.e(TAG, "sub failed " + QXError.ERROR_SUB_NO_CONN);
+            QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NO_CONN);
+        }
+
+    }
+
 
     @Override
-    public void unSubscribe(final List<String> topics, final IOnCallListener iOnCallListener) {
+    public void unSubscribe(final List<String> topics, final IQXCallListener IQXCallListener) {
         mConnHandler.post(new Runnable() {
             @Override
             public void run() {
@@ -340,7 +333,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                     try {
                         if (topics == null) {
                             QXLog.e(TAG, "topics must not be null");
-                            QXCallbackManager.callbackCallResult(false, iOnCallListener, QXError.ERROR_SUB_NULL_TOPIC);
+                            QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NULL_TOPIC);
                             return;
                         }
 
@@ -351,13 +344,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                         client.unsubscribe(topicArr).waitForCompletion();
 
                         QXLog.d(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
-                        QXCallbackManager.callbackCallResult(true, iOnCallListener, null);
+                        QXCallbackManager.callbackCallResult(true, IQXCallListener, null);
                     } catch (MqttException e) {
                         QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, iOnCallListener, e.getReasonCode() + "", e.getMessage());
+                        QXCallbackManager.callbackCallResult(false, IQXCallListener, e.getReasonCode() + "", e.getMessage());
                     } catch (Exception e) {
                         QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, iOnCallListener, QXError.UNKOWN + "", e.getMessage());
+                        QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.UNKOWN + "", e.getMessage());
                     }
 
                 }
@@ -387,6 +380,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
         return connectState;
     }
 
+    @Override
+    public void disconnectAndReconnect() {
+        QXLog.d(TAG, "准备断开连接并重连");
+        disconnect(false);
+        connect();
+    }
+
     private MqttCallback mqttCallback = new MqttCallback() {
 
 
@@ -398,11 +398,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
             callbackDisConn(QXError.ERROR_CONN_NET);
             callbackReConn();
 
-            reconnect(1000);
+            reconnectWithDelay(1000);
         }
 
         @Override
         public void messageArrived(String topic, MqttMessage message) throws Exception {
+
+
             String msg = new String(message.getPayload());
             int qos = message.getQos();
             QXLog.e(TAG, "onMessageArrived : topic = " + topic + "\nqos =  " + qos + "\nmessage = " + msg);
@@ -411,13 +413,13 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
         @Override
         public void deliveryComplete(IMqttDeliveryToken token) {
-            QXLog.e(TAG, "deliveryComplete ");
+//            QXLog.e(TAG, "deliveryComplete ");
         }
     };
 
-    void reconnect(long timeDelay) {
+    void reconnectWithDelay(long timeDelay) {
         QXLog.d(TAG, "reconnecting timeDelay = " + timeDelay);
-        QXTimerUtil.schedule("reconnect", new TimerTask() {
+        QXTimerUtil.schedule("reconnectWithDelay", new TimerTask() {
             @Override
             public void run() {
                 if (connectState == QXMqttConnectState.CONNECTED || connectState == QXMqttConnectState.CONNECTING) {
@@ -432,17 +434,17 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
     @Override
     public void onWifiConnected() {
-        reconnect(100);
+        reconnectWithDelay(100);
     }
 
     @Override
     public void onMobileConnected() {
-        reconnect(100);
+        reconnectWithDelay(100);
     }
 
     @Override
     public void onEthernetConnected() {
-        reconnect(100);
+        reconnectWithDelay(100);
     }
 
     @Override

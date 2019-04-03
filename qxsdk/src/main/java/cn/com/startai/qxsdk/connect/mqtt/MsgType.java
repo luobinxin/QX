@@ -24,8 +24,8 @@ public class MsgType {
     public static final String TYPE_UPDATE_DEVICE_INFO = "0x8019";
 
     public static final String TYPE_UPDATE_USER_INFO = "0x8020";
-    public static final String TYPE_GET_SMS_CODE = "0x8021";
-    public static final String TYPE_CHECK_SMS_CODE = "0x8022";
+    public static final String TYPE_GET_IDENTIFY_CODE = "0x8021";
+    public static final String TYPE_CHECK_IDENTIFY_CODE = "0x8022";
     public static final String TYPE_SEND_EMAIL = "0x8023";
     public static final String TYPE_GET_USER_INFO = "0x8024";
     public static final String TYPE_UPDATE_LOGIN_PWD = "0x8025";

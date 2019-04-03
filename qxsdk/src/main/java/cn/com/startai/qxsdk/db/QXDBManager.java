@@ -84,7 +84,16 @@ public class QXDBManager {
         return instance;
     }
 
+    public void deleteAllTable() {
+        try {
+            db.dropDb();
+        } catch (DbException e) {
+            e.printStackTrace();
+        }
+    }
+
 //--------------------------- DeviceBean -------------------------------
+
 
     /**
      * 添加 或 更新
@@ -361,12 +370,14 @@ public class QXDBManager {
             UserBean first = db.selector(UserBean.class).where(WhereBuilder.b(UserBean.F_USERID, "=", userBean.getUserId())).findFirst();
             userBean.setUpdateTime(System.currentTimeMillis());
             if (first == null) {
+                userBean.setAddTime(System.currentTimeMillis());
                 db.save(userBean);
+
             } else {
                 userBean.set_id(first.get_id());
                 db.update(userBean);
             }
-            QXLog.d(TAG, "addOrUpdate use time = " + (System.currentTimeMillis() - t));
+            QXLog.d(TAG, "addOrUpdateUser use time = " + (System.currentTimeMillis() - t));
         } catch (DbException e) {
             e.printStackTrace();
         }

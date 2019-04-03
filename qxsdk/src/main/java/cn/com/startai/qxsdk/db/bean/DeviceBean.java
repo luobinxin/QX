@@ -211,14 +211,14 @@ public class DeviceBean implements Serializable {
         this.sn = sn;
     }
 
-//    public void fromWanDeviceInfo_8002(C_0x8002.Resp.ContentBean.BebindingBean bebindingBean) {
+//    public void fromWanDeviceInfo_8002(Bind.Resp.ContentBean.BebindingBean bebindingBean) {
 //
 //        this.apptype = bebindingBean.getApptype();
 //        this.featureid = bebindingBean.getFeatureid();
 //        this.remoteState = bebindingBean.getConnstatus() == 1;
 //    }
 //
-//    public void fromWanDeviceInfo_8005(C_0x8005.Resp.ContentBean contentBean) {
+//    public void fromWanDeviceInfo_8005(GetBindList.Resp.ContentBean contentBean) {
 //
 //
 //        this.sn = contentBean.getId();

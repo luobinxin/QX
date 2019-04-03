@@ -7,7 +7,6 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
-import android.text.TextUtils;
 
 import java.net.InetAddress;
 import java.net.UnknownHostException;
@@ -15,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.com.startai.qxsdk.utils.QXLog;
-import cn.com.startai.qxsdk.utils.QXShellUtils;
 
 import static cn.com.startai.qxsdk.QX.TAG;
 
@@ -75,13 +73,16 @@ public class QXNetworkManager {
         return NETWORKTYPE_UNKOWN.equals(networkType) || state == NetworkInfo.State.UNKNOWN;
     }
 
-    public boolean isAvaliableNetwork() {
+    public boolean isAvaliableNetwork(boolean outNetCheck) {
         if (isUnkownNetwork()) {
             return false;
         } else {
-
-            //网已经连接 判断是否可上互联网
-            return isRealConnectToIntnet();
+            if (outNetCheck) {
+                //网已经连接 判断是否可上互联网
+                return isRealConnectToIntnet();
+            } else {
+                return true;
+            }
         }
     }
 
@@ -94,7 +95,7 @@ public class QXNetworkManager {
             QXLog.e(TAG, host + " byName = " + byName.getHostAddress());
             isAvailable = true;
         } catch (UnknownHostException e) {
-            QXLog.e(TAG,e.getMessage());
+            QXLog.e(TAG, e.getMessage());
             isAvailable = false;
         }
 
@@ -112,7 +113,7 @@ public class QXNetworkManager {
                 isAvailable = true;
             } catch (UnknownHostException e) {
 
-                QXLog.e(TAG,e.getMessage());
+                QXLog.e(TAG, e.getMessage());
                 isAvailable = false;
             }
         }

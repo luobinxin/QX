@@ -1,5 +1,10 @@
 package cn.com.startai.qxsdk.busi.entity;
 
+import android.support.annotation.NonNull;
+import android.text.TextUtils;
+
+import org.w3c.dom.Node;
+
 import java.util.List;
 import java.util.TimerTask;
 
@@ -191,6 +196,42 @@ public class BrokerHost {
                     this.weight = weight;
                 }
             }
+
+            public NodeBean getOptimalNode() {
+
+                NodeBean optimalNodeBean = null;
+                for (NodeBean nodeBean : node) {
+                    if (optimalNodeBean == null) {
+                        optimalNodeBean = nodeBean;
+                    } else {
+                        if (optimalNodeBean.getWeight() < nodeBean.getWeight()) {
+                            optimalNodeBean = nodeBean;
+                        }
+                    }
+                }
+                return optimalNodeBean;
+            }
+
+            public NodeBean matchByCountryCode(@NonNull String countryCode) {
+
+                for (NodeBean nodeBean : node) {
+
+                    if (nodeBean.getServer_domain().toUpperCase().contains(countryCode.toUpperCase())) {
+                        return nodeBean;
+                    }
+
+                }
+                return null;
+            }
+
+            public NodeBean getNodeByHost(@NonNull String host) {
+                for (NodeBean nodeBean : node) {
+                    if (host.contains(nodeBean.getServer_domain()) ) {
+                        return nodeBean;
+                    }
+                }
+                return null;
+            }
         }
     }
 
@@ -212,9 +253,10 @@ public class BrokerHost {
         if (resp.getResult() == 1) {
             QXLog.e(TAG, "节点获取成功");
 
-
-
         }
+
+        callback.onGetBrokerHostesult(resp);
+
     }
 
 

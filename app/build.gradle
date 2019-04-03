@@ -1,6 +1,14 @@
 apply plugin: 'com.android.application'
 
 android {
+    signingConfigs {
+        qxsdk {
+            keyAlias 'qxsdk'
+            keyPassword 'startai'
+            storeFile file('D:/startai/as_workspace/QX/startai-key')
+            storePassword 'startai'
+        }
+    }
     compileSdkVersion 28
     defaultConfig {
         applicationId "cn.com.startai.qx"
@@ -9,23 +17,64 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        signingConfig signingConfigs.qxsdk
     }
     buildTypes {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.qxsdk
         }
+        debug {
+            signingConfig signingConfigs.qxsdk
+        }
+    }
+    repositories {
+        flatDir {
+            dirs 'libs'
+        }
+    }
+    productFlavors {
     }
 }
 
 dependencies {
     implementation fileTree(include: ['*.jar'], dir: 'libs')
     implementation 'com.android.support:appcompat-v7:28.0.0'
+    implementation 'com.android.support:design:28.0.0'
     implementation 'com.android.support.constraint:constraint-layout:1.1.3'
     testImplementation 'junit:junit:4.12'
     androidTestImplementation 'com.android.support.test:runner:1.0.2'
     androidTestImplementation 'com.android.support.test.espresso:espresso-core:3.0.2'
     implementation project(':qxsdk')
-
-    api 'cn.com.startai:helper:1.0.01'
+    api(name: 'helper', ext: 'aar')
+    //    api 'cn.com.startai:helper:1.0.01'
+    //enentbus 库
+    api 'org.greenrobot:eventbus:3.1.1'
+    //zxing二维码识别 基础包
+    api 'com.google.zxing:core:3.2.1'
+    //二维码扫描 ui 库
+    api 'com.mylhyl:zxingscanner:2.1.0'
+    //startai 二维码扫描 sdk
+    api 'cn.com.startai:scansdk:1.1.2'
+    // startai 文件上传 下载
+    api 'cn.com.startai:fastdfssdk:1.0.2'
+    //万能适配器
+    api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
+    //bugly 异常统计
+    api 'com.tencent.bugly:crashreport:latest.release'
+    //图片选择裁剪库
+    api 'org.devio.takephoto:takephoto_library:4.1.0'
+    //图片加载库
+    api 'com.github.bumptech.glide:glide:4.8.0'
+    annotationProcessor 'com.github.bumptech.glide:compiler:4.8.0'
+    //android 工具库
+    api 'com.blankj:utilcode:1.19.3'
+    api 'cn.com.startai:esptouchsdk:1.0.4'
+    api 'cn.com.startai:airkisssdk:1.0.4'
+    //chrom inspect 调试工具
+    api 'com.facebook.stetho:stetho:1.4.2'
+    //butterknife
+    implementation 'com.jakewharton:butterknife:8.2.1'
+    annotationProcessor 'com.jakewharton:butterknife-compiler:8.2.1'
 }

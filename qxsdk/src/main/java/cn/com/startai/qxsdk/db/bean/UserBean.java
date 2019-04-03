@@ -1,12 +1,19 @@
 package cn.com.startai.qxsdk.db.bean;
 
+import android.text.TextUtils;
+
 import org.xutils.db.annotation.Column;
 import org.xutils.db.annotation.Table;
 
 import java.io.Serializable;
+import java.util.ArrayList;
+import java.util.List;
 
+import cn.com.startai.qxsdk.busi.entity.GetUserInfo;
 import cn.com.startai.qxsdk.busi.entity.Login;
+import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
 import cn.com.startai.qxsdk.connect.mqtt.BaseMessage;
+import cn.com.startai.qxsdk.utils.QXJsonUtils;
 
 
 /**
@@ -31,6 +38,10 @@ public class UserBean implements Serializable {
     @Column(name = F_UPDATETIME)
     private long updateTime; //数据更新时间
     public static final String F_UPDATETIME = "updateTime";
+
+    @Column(name = F_ADDTIME)
+    private long addTime; //数据添加时间
+    public static final String F_ADDTIME = "addTime";
 
 
     @Column(name = F_TOKEN)
@@ -111,7 +122,24 @@ public class UserBean implements Serializable {
     private int loginStatus;
     public static final String F_LOGINSTATUS = "loginStatus";
 
+    private List<GetUserInfo.Resp.ContentBean.ThirdInfosBean> thirdInfoList;
+
     public UserBean() {
+    }
+
+    /**
+     * 是否只有一个第三方账号绑定，此时不允许解绑
+     *
+     * @return
+     */
+    public boolean isOnlyOneThindBind() {
+        if (TextUtils.isEmpty(getMobile())
+                && TextUtils.isEmpty(getEmail())
+                && getThirdInfoList() != null
+                && getThirdInfoList().size() == 1) {
+            return true;
+        }
+        return false;
     }
 
     public UserBean fromLoginResp(Login.Resp loginResp) {
@@ -122,9 +150,78 @@ public class UserBean implements Serializable {
             setToken(content.getToken());
             setType(content.getType());
             setExpire_in(content.getExpire_in());
+            setLoginStatus(1);
         }
         return this;
 
+    }
+
+    public UserBean fromUpdateUserInfoResp(UpdateUserInfo.Resp resp) {
+        if (resp.getResult() == BaseMessage.RESULT_SUCCESS) {
+            UpdateUserInfo.Resp.ContentBean content = resp.getContent();
+            if (content.getAddress() != null) {
+                setAddress(content.getAddress());
+            }
+            if (content.getBirthday() != null) {
+                setBirthday(content.getBirthday());
+            }
+            if (content.getCity() != null) {
+                setCity(content.getCity());
+            }
+            if (content.getFirstName() != null) {
+                setFirstName(content.getFirstName());
+            }
+            if (content.getLastName() != null) {
+                setLastName(content.getLastName());
+            }
+            if (content.getHeadPic() != null) {
+                setHeadPic(content.getHeadPic());
+            }
+            if (content.getNickName() != null) {
+                setNickName(content.getNickName());
+            }
+            if (content.getProvince() != null) {
+                setProvince(content.getProvince());
+            }
+            if (content.getSex() != null) {
+                setSex(content.getSex());
+            }
+            if (content.getTown() != null) {
+                setTown(content.getTown());
+            }
+            if (content.getUserName() != null) {
+                setUserName(content.getUserName());
+            }
+            if (content.getUserid() != null) {
+                setUserId(content.getUserid());
+            }
+        }
+        return this;
+    }
+
+    public UserBean fromGetUserInfoResp(GetUserInfo.Resp resp) {
+        if (resp.getResult() == BaseMessage.RESULT_SUCCESS) {
+            GetUserInfo.Resp.ContentBean content = resp.getContent();
+            setAddress(content.getAddress());
+            setBirthday(content.getBirthday());
+            setCity(content.getCity());
+            setEmail(content.getEmail());
+            setFirstName(content.getFirstName());
+            setLastName(content.getLastName());
+            setHeadPic(content.getHeadPic());
+            setMobile(content.getMobile());
+            setNickName(content.getNickName());
+            setProvince(content.getProvince());
+            setSex(content.getSex());
+            setTown(content.getTown());
+            setUserName(content.getUserName());
+            setUserId(content.getUserid());
+            setIsHavePwd(content.getIsHavePwd());
+            setThirdInfoList(content.getThirdInfos());
+            setThirdInfos(QXJsonUtils.toJson(getThirdInfoList()));
+
+        }
+        return this;
     }
 
     @Override
@@ -133,7 +230,8 @@ public class UserBean implements Serializable {
                 "_id=" + _id +
                 ", userId='" + userId + '\'' +
                 ", updateTime=" + updateTime +
-                ", token=" + token +
+                ", addTime=" + addTime +
+                ", token='" + token + '\'' +
                 ", expire_in=" + expire_in +
                 ", type=" + type +
                 ", userName='" + userName + '\'' +
@@ -151,7 +249,40 @@ public class UserBean implements Serializable {
                 ", mobile='" + mobile + '\'' +
                 ", isHavePwd=" + isHavePwd +
                 ", thirdInfos='" + thirdInfos + '\'' +
+                ", loginStatus=" + loginStatus +
                 '}';
+    }
+
+    public int getLoginStatus() {
+        return loginStatus;
+    }
+
+    public void setLoginStatus(int loginStatus) {
+        this.loginStatus = loginStatus;
+    }
+
+    public List<GetUserInfo.Resp.ContentBean.ThirdInfosBean> getThirdInfoList() {
+        return thirdInfoList;
+    }
+
+    public void setThirdInfoList(List<GetUserInfo.Resp.ContentBean.ThirdInfosBean> thirdInfoList) {
+        this.thirdInfoList = thirdInfoList;
+    }
+
+    public String getThirdInfos() {
+        return thirdInfos;
+    }
+
+    public void setThirdInfos(String thirdInfos) {
+        this.thirdInfos = thirdInfos;
+    }
+
+    public long getAddTime() {
+        return addTime;
+    }
+
+    public void setAddTime(long addTime) {
+        this.addTime = addTime;
     }
 
     public long get_id() {
@@ -314,11 +445,5 @@ public class UserBean implements Serializable {
         this.isHavePwd = isHavePwd;
     }
 
-    public String getThirdInfos() {
-        return thirdInfos;
-    }
 
-    public void setThirdInfos(String thirdInfos) {
-        this.thirdInfos = thirdInfos;
-    }
 }

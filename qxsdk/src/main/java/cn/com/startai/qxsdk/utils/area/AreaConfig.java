@@ -38,7 +38,6 @@ public class AreaConfig {
     public static AreaLocation getArea() {
 
 
-
         AreaLocation areaLocation = null;
         URL infoUrl = null;
         InputStream inStream = null;

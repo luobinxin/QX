@@ -37,9 +37,11 @@ public class QXErrorCode {
 
     public static final String ERROR_SUB_NULL_TOPIC = "7001";//订阅失败，空主题
     public static final String ERROR_SUB_UNVALIABLE_TOPIC = "7002";//订阅失败，主题格式非法
+    public static final String ERROR_SUB_NO_CONN = "7003";//订阅失败，终端未连接
 
     public static final String ERROR_UNSUB_NULL_TOPIC = "8001";//取消订阅失败，空主题
     public static final String ERROR_UNSUB_UNVALIABLE_TOPIC = "8002";//取消订阅失败，主题格式非法
+    public static final String ERROR_UNSUB_NO_CONN = "8003";//取消订阅失败，主题格式非法
 
 
     public static String getErrorMsgByCode(String errorCode) {
@@ -116,8 +118,14 @@ public class QXErrorCode {
             case ERROR_SUB_UNVALIABLE_TOPIC:
                 errorMsg = "订阅失败，主题格式非法";
                 break;
+            case ERROR_SUB_NO_CONN:
+                errorMsg = "订阅失败，终端未连接";
+                break;
             case ERROR_UNSUB_UNVALIABLE_TOPIC:
                 errorMsg = "取消订阅失败，主题格式非法";
+                break;
+            case ERROR_UNSUB_NO_CONN:
+                errorMsg = "取消订阅失败，终端未连接";
                 break;
             case ERROR_LOST_CLIENT:
                 errorMsg = "连接断开，mqtt断开连接";

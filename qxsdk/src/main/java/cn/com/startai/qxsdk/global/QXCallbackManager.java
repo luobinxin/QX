@@ -1,7 +1,7 @@
 package cn.com.startai.qxsdk.global;
 
 
-import cn.com.startai.qxsdk.event.IOnCallListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 
 /**
  * Created by Robin on 2019/3/12.
@@ -17,7 +17,7 @@ public class QXCallbackManager {
      * @param listener 监听
      * @param errCode  错误信息
      */
-    public static void callbackCallResult(final boolean result, final IOnCallListener listener, final String errCode) {
+    public static void callbackCallResult(final boolean result, final IQXCallListener listener, final String errCode) {
         if (listener != null) {
             if (result) {
                 listener.onSuccess();
@@ -35,7 +35,7 @@ public class QXCallbackManager {
      * @param listener 监听
      * @param errCode  错误信息
      */
-    public static void callbackCallResult(final boolean result, final IOnCallListener listener, final String errCode, final String errorMsg) {
+    public static void callbackCallResult(final boolean result, final IQXCallListener listener, final String errCode, final String errorMsg) {
         if (listener != null) {
             if (result) {
                 listener.onSuccess();

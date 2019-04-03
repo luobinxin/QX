@@ -1,12 +1,15 @@
 package cn.com.startai.qxsdk.connect.mqtt.client;
 
 import android.content.Context;
+import android.location.LocationManager;
+import android.support.annotation.NonNull;
 import android.text.TextUtils;
 
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
 
 import java.security.KeyStore;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import javax.net.SocketFactory;
@@ -14,9 +17,13 @@ import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.TrustManagerFactory;
 
+import cn.com.startai.qxsdk.busi.entity.BrokerHost;
+import cn.com.startai.qxsdk.global.AreaNodesManager;
 import cn.com.startai.qxsdk.global.DeviceInfoManager;
 import cn.com.startai.qxsdk.global.QXSpController;
 import cn.com.startai.qxsdk.utils.QXLog;
+import cn.com.startai.qxsdk.utils.area.AreaLocation;
+import cn.com.startai.qxsdk.utils.area.QXLocationManager;
 
 import static cn.com.startai.qxsdk.QX.TAG;
 
@@ -46,8 +53,15 @@ public class QXMqttConfig {
 
     public static final String HOST_CN = "ssl://cn.startai.net:8883";
     public static final String HOST_US = "ssl://us.startai.net:8883";
-//    private static final String HOST_TEST = "ssl://192.168.1.189:8883";
+    public static String HOST_DEBUG = "";
 
+    public static String getHost() {
+        return host;
+    }
+
+    public static void setHost(String host) {
+        QXMqttConfig.host = host;
+    }
 
     /**
      * 连接参数
@@ -107,21 +121,90 @@ public class QXMqttConfig {
         return factory;
     }
 
+
+    public static List<String> getDefaulthosts() {
+        List list = new ArrayList();
+        list.add(HOST_CN);
+        list.add(HOST_US);
+        return list;
+    }
+
+    private static String getHostFromDefaultByCountryCode(@NonNull String countryCode) {
+        String host = null;
+        List<String> defaulthosts = getDefaulthosts();
+        for (String defaulthost : defaulthosts) {
+            if (defaulthost.toUpperCase().contains("ssl://" + countryCode.toUpperCase())) {
+                host = defaulthost;
+            }
+        }
+        if (TextUtils.isEmpty(host)) {
+            host = HOST_CN;
+        }
+        return host;
+    }
+
     //获取最优连接节点
-    public static String getHost() {
+    public static String getOptimalHost() {
+
+        String optiimalHost = null;
+
+        if (changeHostTimeDelay == 0) {
+            QXLog.d(TAG, "不需要获取最优节点，直接匹配当地节点");
+            AreaLocation location = QXLocationManager.getInstance().getLocation();
+            if (location != null) {
+                optiimalHost = getHostFromDefaultByCountryCode(location.getCountryCode());
+            } else {
+                optiimalHost = HOST_CN;
+            }
+            return optiimalHost;
+        }
+        if (!TextUtils.isEmpty(HOST_DEBUG)) {
+            return HOST_DEBUG;
+        }
 
         //获取内存缓存的数据
+        BrokerHost.Resp.ContentBean cacheAreaNodes = AreaNodesManager.getInstance().getCacheAreaNodes();
+        BrokerHost.Resp.ContentBean spAreaNodes = AreaNodesManager.getInstance().getSpAreaNodes();
 
-        //如果有 则表示， 此次是断线重连，不需要切换节点，直接返回上一次的连接节点
+        //首次启动应用
+        if (cacheAreaNodes == null && spAreaNodes == null) {
+            QXLog.d(TAG, "首次启动应用");
+            //定位匹配节点
+            AreaLocation location = QXLocationManager.getInstance().getLocation();
+            if (location != null) {
+                optiimalHost = getHostFromDefaultByCountryCode(location.getCountryCode());
+            } else {
+                optiimalHost = HOST_CN;
+            }
 
-        //如果没有
+        } else {//再次启动应用
+            if (cacheAreaNodes == null) {
+                QXLog.d(TAG, "再次启动应用");
+                AreaNodesManager.getInstance().setCacheAreaNodes(spAreaNodes);
+                cacheAreaNodes = AreaNodesManager.getInstance().getCacheAreaNodes();
 
-        //获取本地数据 如果有，则表示需要切换节点
-        //将本地数据覆盖到内存缓存数据
-        //
-        //如果没有 表示第一次启动，需要定位获取最优节点
+            } else {
+                QXLog.d(TAG, "断线重连");
+                BrokerHost.Resp.ContentBean.NodeBean nodeByHost = cacheAreaNodes.getNodeByHost(host);
 
-        return QXMqttConfig.HOST_CN;
+                if (nodeByHost == null || nodeByHost.getWeight() <= 0) {
+                    QXLog.d(TAG, "权值已经全部小于0，重置所有节点权值重新计算时延");
+                    AreaNodesManager.getInstance().setCacheAreaNodes(spAreaNodes);
+                    cacheAreaNodes = AreaNodesManager.getInstance().getCacheAreaNodes();
+                }
+
+            }
+
+            BrokerHost.Resp.ContentBean.NodeBean optimalNode = cacheAreaNodes.getOptimalNode();
+            if (optimalNode != null && optimalNode.getWeight() > 0) {
+                optiimalHost = optimalNode.getServer_domain();
+            } else {
+                optiimalHost = HOST_CN;
+            }
+
+        }
+
+        return optiimalHost;
 
     }
 
@@ -135,7 +218,9 @@ public class QXMqttConfig {
             return null;
         }
         if (TextUtils.isEmpty(sn)) {
-            sn = DeviceInfoManager.getInstance().getSn(context);
+            DeviceInfoManager instance = DeviceInfoManager.getInstance();
+            sn = instance.getSn_16(instance.getSn(context) + appid);
+            QXLog.d(TAG, "sn = " + sn);
         }
         return sn;
     }

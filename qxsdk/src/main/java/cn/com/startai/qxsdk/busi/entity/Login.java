@@ -22,15 +22,7 @@ public class Login {
     public static final int TYPE_UNAME_PWD = 4;
     public static final int TYPE_MOBILE_CODE_PWD = 5;
 
-    public static final int THIRD_WECHAT = 10;
-    public static final int THIRD_ALIPAY = 11;
-    public static final int THIRD_QQ = 12;
-    public static final int THIRD_GOOGLE = 13;
-    public static final int THIRD_TWITTER = 14;
-    public static final int THIRD_AMAZON = 15;
-    public static final int THIRD_FACEBOOK = 16;
-    public static final int THIRD_MI = 17;
-    public static final int THIRD_SMALLROUTINE = 18;
+
 
 
     public static class Req {
@@ -40,6 +32,11 @@ public class Login {
         private String identifyCode;
         private int type;
 
+        public Req(String uname, String pwd, String identifyCode) {
+            this.uname = uname;
+            this.pwd = pwd;
+            this.identifyCode = identifyCode;
+        }
 
         @Override
         public String toString() {

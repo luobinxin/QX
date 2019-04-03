@@ -7,6 +7,8 @@ import cn.com.startai.qxsdk.busi.entity.BrokerHost;
  * 419109715@qq.com 彬影
  */
 public class AreaNodesManager {
+
+
     private static final AreaNodesManager ourInstance = new AreaNodesManager();
 
     public static AreaNodesManager getInstance() {
@@ -36,5 +38,7 @@ public class AreaNodesManager {
     public void setSpAreaNodes(BrokerHost.Resp.ContentBean areaNodes) {
         QXSpController.setAreaNodeBeans(areaNodes);
     }
+
+
 
 }

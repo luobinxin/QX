@@ -28,24 +28,31 @@ public class QXUserManager {
     private UserBean currUser;
 
     public UserBean getUser() {
+        if (QX.getInstance().isInit()) {
 
-        if (currUser == null) {
-            currUser = QXDBManager.getInstance().getUserByLoginStatus(1);
+            if (currUser == null) {
+                currUser = QXDBManager.getInstance().getUserByLoginStatus(1);
+            }
+            return currUser;
+        } else {
+            return null;
         }
 
-        return currUser;
     }
 
     public String getUserId() {
-
-        if (TextUtils.isEmpty(userId)) {
-            UserBean user = getUser();
-            if (user != null) {
-                userId = user.getUserId();
+        if (QX.getInstance().isInit()) {
+            if (TextUtils.isEmpty(userId)) {
+                UserBean user = getUser();
+                if (user != null) {
+                    userId = user.getUserId();
+                }
             }
+            return userId;
+        } else {
+            return "";
         }
 
-        return userId;
     }
 
     public void resetUser() {
@@ -54,4 +61,18 @@ public class QXUserManager {
         QXDBManager.getInstance().resetUser();
     }
 
+    public void setUserId(String userId) {
+        this.userId = userId;
+    }
+
+
+    public void setCurrUser(UserBean currUser) {
+        this.currUser = currUser;
+    }
+
+    public void addOrUpdateUser(UserBean userBean) {
+        QXDBManager.getInstance().addOrUpdateUser(userBean);
+        this.currUser = userBean;
+        this.userId = userBean.getUserId();
+    }
 }

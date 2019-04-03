@@ -6,15 +6,13 @@ import java.net.DatagramPacket;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
 
-import cn.com.startai.qxsdk.QX;
 import cn.com.startai.qxsdk.connect.udp.IQXUDP;
 import cn.com.startai.qxsdk.connect.udp.IQXUDPListener;
 import cn.com.startai.qxsdk.connect.udp.UDPData;
-import cn.com.startai.qxsdk.event.IOnCallListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.global.LooperManager;
 import cn.com.swain.support.udp.AbsFastUdp;
 import cn.com.swain.support.udp.FastUdpFactory;
-import cn.com.swain.support.udp.impl.IUDPResult;
 
 /**
  * Created by Robin on 2019/3/20.
@@ -60,7 +58,7 @@ public class QXUDPImpl implements IQXUDP {
 
 
     @Override
-    public void send(UDPData data, IOnCallListener listener) {
+    public void send(UDPData data, IQXCallListener listener) {
         DatagramPacket datagramPacket = getDatagramPacket(data);
         mUdpCom.send(datagramPacket);
     }

@@ -124,14 +124,22 @@ public class UpdateDeviceInfo {
 
         public static class ContentBean extends QXError {
 
+            private String sn;
+            private StatusParam statusParam;
+            private BusinessParam businessParam;
+
+
             private Req errcontent;
 
             @Override
             public String toString() {
                 return "ContentBean{" +
-                        "errcode='" + errcode + '\'' +
-                        ", errmsg='" + errmsg + '\'' +
+                        "sn='" + sn + '\'' +
+                        ", statusParam=" + statusParam +
+                        ", businessParam=" + businessParam +
                         ", errcontent=" + errcontent +
+                        ", errcode='" + errcode + '\'' +
+                        ", errmsg='" + errmsg + '\'' +
                         '}';
             }
 
@@ -141,6 +149,52 @@ public class UpdateDeviceInfo {
 
             public void setErrcontent(Req errcontent) {
                 this.errcontent = errcontent;
+            }
+
+            private class StatusParam {
+            }
+
+            private class BusinessParam {
+                private String ip;
+
+                @Override
+                public String toString() {
+                    return "BusinessParam{" +
+                            "ip='" + ip + '\'' +
+                            '}';
+                }
+
+                public String getIp() {
+                    return ip;
+                }
+
+                public void setIp(String ip) {
+                    this.ip = ip;
+                }
+            }
+
+            public String getSn() {
+                return sn;
+            }
+
+            public void setSn(String sn) {
+                this.sn = sn;
+            }
+
+            public StatusParam getStatusParam() {
+                return statusParam;
+            }
+
+            public void setStatusParam(StatusParam statusParam) {
+                this.statusParam = statusParam;
+            }
+
+            public BusinessParam getBusinessParam() {
+                return businessParam;
+            }
+
+            public void setBusinessParam(BusinessParam businessParam) {
+                this.businessParam = businessParam;
             }
         }
     }

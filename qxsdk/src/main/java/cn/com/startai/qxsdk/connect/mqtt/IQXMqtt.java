@@ -7,7 +7,7 @@ import java.util.List;
 
 import cn.com.startai.qxsdk.connect.IConnectBusi;
 import cn.com.startai.qxsdk.connect.mqtt.event.IQxMqttListener;
-import cn.com.startai.qxsdk.event.IOnCallListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 
 /**
  * Created by Robin on 2019/3/20.
@@ -16,11 +16,13 @@ import cn.com.startai.qxsdk.event.IOnCallListener;
 public interface IQXMqtt extends IConnectBusi {
 
 
-    void publish(QXMqttData data, IOnCallListener listener);
+    void publish(QXMqttData data, IQXCallListener listener);
 
-    void subscribe(List<String> topic, final IOnCallListener iOnCallListener);
+    void subscribe(List<String> topic, final IQXCallListener IQXCallListener);
 
-    void unSubscribe(List<String> topic, final IOnCallListener iOnCallListener);
+    void subscribeSync(List<String> topic, final IQXCallListener IQXCallListener);
+
+    void unSubscribe(List<String> topic, final IQXCallListener IQXCallListener);
 
     void setListener(IQxMqttListener listener);
 
@@ -30,4 +32,5 @@ public interface IQXMqtt extends IConnectBusi {
 
     QXMqttConnectState getQXMqttConnectState();
 
+    void disconnectAndReconnect();
 }

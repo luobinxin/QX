@@ -6,8 +6,17 @@ import org.json.JSONObject;
 
 import cn.com.startai.qxsdk.busi.entity.Activate;
 import cn.com.startai.qxsdk.busi.entity.BrokerHost;
+import cn.com.startai.qxsdk.busi.entity.CheckIdentifyCode;
+import cn.com.startai.qxsdk.busi.entity.GetIdentifyCode;
+import cn.com.startai.qxsdk.busi.entity.GetLatestAppVersion;
+import cn.com.startai.qxsdk.busi.entity.GetUserInfo;
 import cn.com.startai.qxsdk.busi.entity.Login;
+import cn.com.startai.qxsdk.busi.entity.Register;
+import cn.com.startai.qxsdk.busi.entity.ResetLoginPwd;
+import cn.com.startai.qxsdk.busi.entity.SendEmail;
 import cn.com.startai.qxsdk.busi.entity.UpdateDeviceInfo;
+import cn.com.startai.qxsdk.busi.entity.UpdateLoginPwd;
+import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
 import cn.com.startai.qxsdk.connect.mqtt.task.OnMqttTaskCallBack;
 import cn.com.startai.qxsdk.connect.mqtt.task.system.LoginTask;
 import cn.com.startai.qxsdk.connect.mqtt.MsgType;
@@ -64,33 +73,33 @@ public class BaseMiofBusiHandler {
                 Activate.handlerMsg(msg, callback);
                 break;
 //
-//            case C_0x8002.MSGTYPE://添加好友
-//                C_0x8002.m_resp(msg);
+//            case Bind.MSGTYPE://添加好友
+//                Bind.m_resp(msg);
 //                break;
 //
-//            case C_0x8003.MSGTYPE://注销激活
-//                C_0x8003.m_resp(msg);
+//            case UnActivate.MSGTYPE://注销激活
+//                UnActivate.m_resp(msg);
 //                break;
 //
-//            case C_0x8004.MSGTYPE://删除好友
-//                C_0x8004.m_resp(msg);
+//            case UnBind.MSGTYPE://删除好友
+//                UnBind.m_resp(msg);
 //                break;
 //
-//            case C_0x8005.MSGTYPE://查询好友关系
-//                C_0x8005.m_resp(msg);
+//            case GetBindList.MSGTYPE://查询好友关系
+//                GetBindList.m_resp(msg);
 //                break;
 //
 //            case C_0x8015.MSGTYPE://修改备注名
 //                C_0x8015.m_resp(msg);
 //                break;
-//
-//            case C_0x8016.MSGTYPE://查询最新版本
-//                C_0x8016.m_resp(msg);
-//                break;
-//
-//            case C_0x8017.MSGTYPE://用户注册
-//                C_0x8017.m_resp(msg);
-//                break;
+
+            case MsgType.TYPE_GET_LATEST_APP_VERSION://查询最新版本
+                GetLatestAppVersion.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_REGISTER://用户注册
+                Register.handlerMsg(msg, callback);
+                break;
 
             case MsgType.TYPE_LOGIN://登录
                 Login.handlerMsg(msg, callback);
@@ -99,79 +108,78 @@ public class BaseMiofBusiHandler {
             case MsgType.TYPE_UPDATE_DEVICE_INFO://更新设备信息
                 UpdateDeviceInfo.handlerMsg(msg, callback);
                 break;
+
+            case MsgType.TYPE_UPDATE_USER_INFO://更新用户信息
+                UpdateUserInfo.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_GET_IDENTIFY_CODE://获取验证码
+                GetIdentifyCode.handlerMsg(msg, callback);
+                break;
+            case MsgType.TYPE_CHECK_IDENTIFY_CODE://检验验证码
+                CheckIdentifyCode.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_SEND_EMAIL://请求发送邮件
+                SendEmail.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_GET_USER_INFO://查询用户信息
+                GetUserInfo.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_UPDATE_LOGIN_PWD://修改密码
+                UpdateLoginPwd.handlerMsg(msg, callback);
+                break;
+
+            case MsgType.TYPE_RESET_LOGIN_PWD://重置登录密码
+
+                ResetLoginPwd.handlerMsg(msg, callback);
+//                break;
+//            case LoginWithThirdAccount.MSGTYPE://第三方登录
 //
-//            case C_0x8020.MSGTYPE://更新用户信息
-//                C_0x8020.m_resp(msg);
+//                LoginWithThirdAccount.m_resp(msg);
 //                break;
 //
-//            case C_0x8021.MSGTYPE://获取验证码
-//                C_0x8021.m_resp(msg);
-//                break;
-//
-//            case C_0x8022.MSGTYPE://检验验证码
-//                C_0x8022.m_resp(msg);
-//                break;
-//
-//            case C_0x8023.MSGTYPE://请求发送邮件
-//                C_0x8023.m_resp(msg);
-//                break;
-//
-//            case C_0x8024.MSGTYPE://查询用户信息
-//                C_0x8024.m_resp(msg);
-//                break;
-//
-//            case C_0x8025.MSGTYPE://修改密码
-//                C_0x8025.m_resp(msg);
-//                break;
-//
-//            case C_0x8026.MSGTYPE://手机重置密码
-//
-//                C_0x8026.m_resp(msg);
-//                break;
-//            case C_0x8027.MSGTYPE://第三方登录
-//
-//                C_0x8027.m_resp(msg);
-//                break;
-//
-//            case C_0x8028.MSGTYPE: //第三方支付 统一下单
-//                C_0x8028.m_resp(msg);
+//            case ThirdPaymentUnifiedOrder.MSGTYPE: //第三方支付 统一下单
+//                ThirdPaymentUnifiedOrder.m_resp(msg);
 //                break;
 //            case C_0x8200.MSGTYPE://消息透传
 //                C_0x8200.m_resp(topic, msg);
 //                break;
 //
-//            case C_0x8031.MSGTYPE: //查询订单支付状态
-//                C_0x8031.m_resp(msg);
+//            case GetRealPayResult.MSGTYPE: //查询订单支付状态
+//                GetRealPayResult.m_resp(msg);
 //                break;
 //
 //
-//            case C_0x8033.MSGTYPE: //查询 支付宝密钥
-//                C_0x8033.m_resp(msg);
+//            case GetAlipayAuthInfo.MSGTYPE: //查询 支付宝密钥
+//                GetAlipayAuthInfo.m_resp(msg);
 //
 //                break;
 //
-//            case C_0x8034.MSGTYPE: //查询 支付宝密钥
-//                C_0x8034.m_resp(msg);
+//            case BindMobile.MSGTYPE: //查询 支付宝密钥
+//                BindMobile.m_resp(msg);
 //
 //                break;
-//            case C_0x8035.MSGTYPE://查询天气
-//                C_0x8035.m_resp(msg);
+//            case GetWeatherInfo.MSGTYPE://查询天气
+//                GetWeatherInfo.m_resp(msg);
 //                break;
-//            case C_0x8036.MSGTYPE: //解绑 第三方账号
-//                C_0x8036.m_resp(msg);
+//            case UnBindThirdAccount.MSGTYPE: //解绑 第三方账号
+//                UnBindThirdAccount.m_resp(msg);
 //
 //                break;
 //
-//            case C_0x8037.MSGTYPE: //绑定 第三方账号
-//                C_0x8037.m_resp(msg);
+//            case BindThirdAccount.MSGTYPE: //绑定 第三方账号
+//                BindThirdAccount.m_resp(msg);
 //
 //                break;
-//            case C_0x8038.MSGTYPE: //分页获取好友列表
-//                C_0x8038.m_resp(msg);
+//            case GetBindList.MSGTYPE: //分页获取好友列表
+//                GetBindList.m_resp(msg);
 //
 //                break;
-//            case C_0x8039.MSGTYPE: //绑定邮箱
-//                C_0x8039.m_resp(msg);
+//            case BindEmail.MSGTYPE: //绑定邮箱
+//                BindEmail.m_resp(msg);
 //
 //            break;
 

@@ -19,6 +19,7 @@ allprojects {
     repositories {
         google()
         jcenter()
+        maven { url "https://jitpack.io" }
         maven {
             url 'https://dl.bintray.com/robin1015/maven/'
         }
@@ -29,6 +30,8 @@ allprojects {
         options.addStringOption('Xdoclint:none', '-quiet')
         options.addStringOption('encoding', 'UTF-8')
     }
+
+
 }
 
 task clean(type: Delete) {
