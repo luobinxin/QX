@@ -1,10 +1,14 @@
 package cn.com.startai.qxsdk.connect.mqtt.client;
 
+
 import android.os.Handler;
 import android.os.HandlerThread;
+import android.os.Looper;
 
+import org.eclipse.paho.client.mqttv3.IMqttActionListener;
 import org.eclipse.paho.client.mqttv3.IMqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.IMqttDeliveryToken;
+import org.eclipse.paho.client.mqttv3.IMqttToken;
 import org.eclipse.paho.client.mqttv3.MqttAsyncClient;
 import org.eclipse.paho.client.mqttv3.MqttCallback;
 import org.eclipse.paho.client.mqttv3.MqttConnectOptions;
@@ -17,12 +21,11 @@ import java.util.TimerTask;
 
 import cn.com.startai.qxsdk.QX;
 import cn.com.startai.qxsdk.connect.mqtt.IQXMqtt;
-import cn.com.startai.qxsdk.connect.mqtt.QXMqttConnectState;
+import cn.com.startai.qxsdk.connect.mqtt.ServerConnectState;
 import cn.com.startai.qxsdk.connect.mqtt.QXMqttData;
 import cn.com.startai.qxsdk.connect.mqtt.event.IQxMqttListener;
 import cn.com.startai.qxsdk.connect.mqtt.event.QXTimerPingListener;
 import cn.com.startai.qxsdk.connect.mqtt.event.QXTimerPingSender;
-import cn.com.startai.qxsdk.connect.udp.client.QXUDPImpl;
 import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.network.IQXNetworkListener;
 import cn.com.startai.qxsdk.global.QXCallbackManager;
@@ -40,9 +43,20 @@ import static cn.com.startai.qxsdk.QX.TAG;
  */
 public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
-    private static final String TAG_BUSI = TAG + "BUSI";
-    private static final String TAG_SEND = TAG + "SEND";
-    private static final String TAG_CONN = TAG + "CONN";
+
+    //将构造函数私有化
+    private QXMqttImpl() {
+    }
+
+    public static QXMqttImpl getInstance() {
+        return SingleTonHoulder.singleTonInstance;
+    }
+
+    //静态内部类
+    private static class SingleTonHoulder {
+        private static final QXMqttImpl singleTonInstance = new QXMqttImpl();
+    }
+
 
     private IMqttAsyncClient client;
 
@@ -50,64 +64,24 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
     private MqttConnectOptions option;
     private IQxMqttListener listener;
 
-    private QXMqttConnectState connectState;
+    private ServerConnectState connectState;
 
-
-    private static HandlerThread htConn;
-    private static HandlerThread htBusi;
-    private static HandlerThread htSend;
-
-    private static Handler mConnHandler;
-    private static Handler mBusiHandler;
-    private static Handler mSendHandler;
-    private int returnCount;
+    private int retryCount;
     private String clientId;
 
-
-    public QXTimerPingSender.PingListener getPingListener() {
-        if (pingListener == null) {
-            pingListener = new QXTimerPingListener();
-        }
-        return pingListener;
-    }
-
-    private static volatile QXMqttImpl instance;
-
-    private QXMqttImpl() {
-    }
-
-    public static IQXMqtt getInstance() {
-        if (instance == null) {
-            synchronized (QXUDPImpl.class) {
-                if (instance == null) {
-                    instance = new QXMqttImpl();
-
-                    htConn = new HandlerThread(TAG_CONN);
-                    htConn.start();
-                    mConnHandler = new Handler(htConn.getLooper());
-
-                    htBusi = new HandlerThread(TAG_BUSI);
-                    htBusi.start();
-                    mBusiHandler = new Handler(htBusi.getLooper());
-
-                    htSend = new HandlerThread(TAG_SEND);
-                    htSend.start();
-                    mSendHandler = new Handler(htSend.getLooper());
-
-                }
-            }
-        }
-
-        return instance;
-    }
-
+    private Handler mHandler;
+    private HandlerThread ht;
 
     @Override
     public void init() {
 
-
+        if (mHandler == null) {
+            ht = new HandlerThread(TAG + "QXMqttImpl");
+            ht.start();
+            mHandler = new Handler(ht.getLooper());
+        }
+        pingListener = new QXTimerPingListener();
         QXNetworkManager.getInstance().addNetworkListener(this);
-
         connect();
     }
 
@@ -118,46 +92,40 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
         disconnect(true);
 
-        mSendHandler.removeCallbacksAndMessages(null);
-        htSend.quit();
-        QXLog.e(TAG, "htSend quit");
-
-        mBusiHandler.removeCallbacksAndMessages(null);
-        htBusi.quit();
-        QXLog.e(TAG, "htBusi quit");
-
-
-        instance = null;
+        if (mHandler != null) {
+            mHandler.removeCallbacksAndMessages(null);
+            mHandler = null;
+        }
+        if (ht != null) {
+            ht.quit();
+            ht = null;
+        }
     }
 
 
-    private void connect() {
-
-        mConnHandler.post(new Runnable() {
+    private synchronized void connect() {
+        mHandler.post(new Runnable() {
             @Override
             public void run() {
-
                 try {
-
-                    if (connectState == QXMqttConnectState.CONNECTED && QXSpController.getIsActivite()) {
+                    if (connectState == ServerConnectState.CONNECTED && QXSpController.getIsActivite()) {
                         //激活成功才回调连接成功
                         callbackConn();
                         return;
                     }
-
                     if (!QXNetworkManager.getInstance().isAvaliableNetwork(false)) {
                         QXLog.e(TAG, "network is unvaliable ");
-                        connectState = QXMqttConnectState.DISCONNECTED;
+                        connectState = ServerConnectState.DISCONNECTED;
                         callbackDisConn(QXError.ERROR_CONN_NET);
                         return;
                     }
 
 
-                    if (connectState == QXMqttConnectState.CONNECTING) {
+                    if (connectState == ServerConnectState.CONNECTING) {
                         QXLog.e(TAG, "正在连接中，无需重复连接");
                         return;
                     }
-                    connectState = QXMqttConnectState.CONNECTING;
+                    connectState = ServerConnectState.CONNECTING;
                     option = QXMqttConfig.getConnectOptions(QX.getInstance().getApp());
                     if (option == null) {
                         callbackDisConn(QXError.ERROR_CONN_CER);
@@ -169,7 +137,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
                     clientId = QXMqttConfig.getClientId();
                     QXLog.d(TAG, "connect host = " + host + " clientid = " + clientId);
-                    QXTimerPingSender QXTimerPingSender = new QXTimerPingSender(getPingListener());
+                    QXTimerPingSender QXTimerPingSender = new QXTimerPingSender(pingListener);
                     client = new MqttAsyncClient(host, clientId, null, QXTimerPingSender);
                     client.setCallback(mqttCallback);
 
@@ -183,7 +151,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                     client.connect(option).waitForCompletion();
 
                     QXLog.e(TAG, "connect success host = " + client.getServerURI() + " clientid = " + client.getClientId());
-                    connectState = QXMqttConnectState.CONNECTED;
+                    connectState = ServerConnectState.CONNECTED;
                     pingListener.onReset();
                     QXMqttConfig.setClientId(clientId);
                     QXMqttConfig.setHost(client.getServerURI());
@@ -199,97 +167,80 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                     }
                     QXLog.e(TAG, "connect failure");
                     mqttException.printStackTrace();
-                    connectState = QXMqttConnectState.CONNECTFAIL;
+                    connectState = ServerConnectState.CONNECTFAIL;
 
                     callbackDisConn(mqttException.getReasonCode() + "", mqttException.getMessage());
 
-                    QXLog.e(TAG, "连接失败,准备重试 " + returnCount++);
+                    QXLog.e(TAG, "连接失败,准备重试 " + retryCount++);
                     //准备重连
                     callbackReConn();
                     reconnectWithDelay(2000);
 
                 }
-
-
             }
         });
-
-
     }
 
 
-    private void disconnect(final boolean inReleaseCall) {
-
-        mConnHandler.post(new Runnable() {
-            @Override
-            public void run() {
-
-                connectState = QXMqttConnectState.DISCONNECTING;
-                try {
-                    client.disconnect().waitForCompletion();
-                } catch (MqttException e) {
-                    e.printStackTrace();
-                }
-                connectState = QXMqttConnectState.DISCONNECTED;
-                if (inReleaseCall) {
-                    mConnHandler.removeCallbacksAndMessages(null);
-                    htConn.quit();
-                    QXLog.e(TAG, "htConnect quit");
-                }
+    @Override
+    public void disconnect(boolean isRelease) {
+        connectState = ServerConnectState.DISCONNECTING;
+        try {
+            client.disconnect().waitForCompletion();
+            QXLog.e(TAG, "client disconnected");
+            if (isRelease) {
+                client.close();
+                QXLog.e(TAG, "client closed");
             }
-        });
+        } catch (MqttException e) {
+            e.printStackTrace();
+        }
+        connectState = ServerConnectState.DISCONNECTED;
     }
 
     @Override
-    public void publish(final QXMqttData mqttData, final IQXCallListener onCallListener) {
-        mSendHandler.post(new Runnable() {
-            @Override
-            public void run() {
+    public synchronized void publish(final QXMqttData mqttData, final IQXCallListener onCallListener) {
 
-                if (client != null && connectState == QXMqttConnectState.CONNECTED) {
+        if (client != null && connectState == ServerConnectState.CONNECTED) {
 
-                    MqttMessage mqttMessage = new MqttMessage(mqttData.getData());
+            final MqttMessage mqttMessage = new MqttMessage(mqttData.getData());
 
-                    try {
-                        QXLog.d(TAG, "publish before");
-                        client.publish(mqttData.getTopic(), mqttMessage).waitForCompletion();
-
+            try {
+                QXLog.d(TAG, "publish before");
+                client.publish(mqttData.getTopic(), mqttMessage, null, new IMqttActionListener() {
+                    @Override
+                    public void onSuccess(IMqttToken asyncActionToken) {
                         QXLog.d(TAG, "topic = " + mqttData.getTopic() + "\nqos = " + mqttMessage.getQos() + "\nretain = " + mqttMessage.isRetained() + "\npublish " + new String(mqttMessage.getPayload()));
 
                         //send success
                         QXCallbackManager.callbackCallResult(true, onCallListener, null);
-
-                    } catch (MqttException e) {
-                        e.printStackTrace();
-                        QXCallbackManager.callbackCallResult(true, onCallListener, e.getReasonCode() + "");
                     }
 
-                } else {
-                    QXCallbackManager.callbackCallResult(false, onCallListener, QXError.ERROR_SEND_CLIENT_DISCONNECT);
-                }
+                    @Override
+                    public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
 
+                    }
+                });
+
+
+            } catch (MqttException e) {
+                e.printStackTrace();
+                QXCallbackManager.callbackCallResult(true, onCallListener, e.getReasonCode() + "");
             }
-        });
+
+        } else {
+            QXCallbackManager.callbackCallResult(false, onCallListener, QXError.ERROR_SEND_CLIENT_DISCONNECT);
+        }
+
+
     }
 
-
-    @Override
-    public void subscribe(final List<String> topics, final IQXCallListener IQXCallListener) {
-        mConnHandler.post(new Runnable() {
-            @Override
-            public void run() {
-                subscribeSync(topics, IQXCallListener);
-            }
-        });
-    }
-
-    @Override
-    public void subscribeSync(List<String> topics, IQXCallListener IQXCallListener) {
-        if (connectState == QXMqttConnectState.CONNECTED) {
+    private synchronized void toSubscribe(boolean isSync, List<String> topics, final IQXCallListener callListener) {
+        if (connectState == ServerConnectState.CONNECTED) {
             try {
                 if (topics == null) {
                     QXLog.e(TAG, "topics must not be null");
-                    QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NULL_TOPIC);
+                    QXCallbackManager.callbackCallResult(false, callListener, QXError.ERROR_SUB_NULL_TOPIC);
                     return;
                 }
 
@@ -302,10 +253,71 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                 for (int i : qoss) {
                     qoss[i] = 1;
                 }
+                if (isSync) {
 
-                client.subscribe(topicArr, qoss).waitForCompletion();
+                    client.subscribe(topicArr, qoss).waitForCompletion();
+                    QXLog.e(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
+                    QXCallbackManager.callbackCallResult(true, callListener, null);
+                } else {
+                    final String[] finalTopicArr = topicArr;
+                    client.subscribe(topicArr, qoss, null, new IMqttActionListener() {
+                        @Override
+                        public void onSuccess(IMqttToken asyncActionToken) {
+                            QXLog.e(TAG, "sub topics = " + Arrays.toString(finalTopicArr) + " success");
+                            QXCallbackManager.callbackCallResult(true, callListener, null);
+                        }
 
-                QXLog.e(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
+                        @Override
+                        public void onFailure(IMqttToken asyncActionToken, Throwable exception) {
+
+                        }
+                    });
+                }
+
+
+            } catch (MqttException e) {
+                QXLog.e(TAG, "sub topics = " + topics + " failed");
+                QXCallbackManager.callbackCallResult(false, callListener, e.getReasonCode() + "", e.getMessage());
+            } catch (Exception e) {
+                QXLog.e(TAG, "sub topics = " + topics + " failed");
+                QXCallbackManager.callbackCallResult(false, callListener, QXError.UNKOWN + "", e.getMessage());
+            }
+
+        } else {
+            QXLog.e(TAG, "sub failed " + QXError.ERROR_SUB_NO_CONN);
+            QXCallbackManager.callbackCallResult(false, callListener, QXError.ERROR_SUB_NO_CONN);
+        }
+    }
+
+    @Override
+    public synchronized void subscribe(final List<String> topics, final IQXCallListener callListener) {
+        toSubscribe(false, topics, callListener);
+    }
+
+    @Override
+    public synchronized void subscribeSync(List<String> topics, IQXCallListener callListener) {
+        toSubscribe(true, topics, callListener);
+    }
+
+
+    @Override
+    public synchronized void unSubscribe(final List<String> topics, final IQXCallListener IQXCallListener) {
+
+        if (connectState == ServerConnectState.CONNECTED) {
+            try {
+                if (topics == null) {
+                    QXLog.e(TAG, "topics must not be null");
+                    QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NULL_TOPIC);
+                    return;
+                }
+
+                String[] topicArr = new String[topics.size()];
+
+                topicArr = topics.toArray(topicArr);
+
+                client.unsubscribe(topicArr).waitForCompletion();
+
+                QXLog.d(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
                 QXCallbackManager.callbackCallResult(true, IQXCallListener, null);
             } catch (MqttException e) {
                 QXLog.e(TAG, "sub topics = " + topics + " failed");
@@ -314,49 +326,8 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
                 QXLog.e(TAG, "sub topics = " + topics + " failed");
                 QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.UNKOWN + "", e.getMessage());
             }
-
-        } else {
-            QXLog.e(TAG, "sub failed " + QXError.ERROR_SUB_NO_CONN);
-            QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NO_CONN);
         }
 
-    }
-
-
-    @Override
-    public void unSubscribe(final List<String> topics, final IQXCallListener IQXCallListener) {
-        mConnHandler.post(new Runnable() {
-            @Override
-            public void run() {
-
-                if (connectState == QXMqttConnectState.CONNECTED) {
-                    try {
-                        if (topics == null) {
-                            QXLog.e(TAG, "topics must not be null");
-                            QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.ERROR_SUB_NULL_TOPIC);
-                            return;
-                        }
-
-                        String[] topicArr = new String[topics.size()];
-
-                        topicArr = topics.toArray(topicArr);
-
-                        client.unsubscribe(topicArr).waitForCompletion();
-
-                        QXLog.d(TAG, "sub topics = " + Arrays.toString(topicArr) + " success");
-                        QXCallbackManager.callbackCallResult(true, IQXCallListener, null);
-                    } catch (MqttException e) {
-                        QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, IQXCallListener, e.getReasonCode() + "", e.getMessage());
-                    } catch (Exception e) {
-                        QXLog.e(TAG, "sub topics = " + topics + " failed");
-                        QXCallbackManager.callbackCallResult(false, IQXCallListener, QXError.UNKOWN + "", e.getMessage());
-                    }
-
-                }
-
-            }
-        });
     }
 
 
@@ -376,12 +347,12 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
     }
 
     @Override
-    public QXMqttConnectState getQXMqttConnectState() {
+    public synchronized ServerConnectState getQXMqttConnectState() {
         return connectState;
     }
 
     @Override
-    public void disconnectAndReconnect() {
+    public synchronized void disconnectAndReconnect() {
         QXLog.d(TAG, "准备断开连接并重连");
         disconnect(false);
         connect();
@@ -394,7 +365,7 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
         public void connectionLost(Throwable cause) {
             QXLog.e(TAG, "connectionLost");
             cause.printStackTrace();
-            connectState = QXMqttConnectState.DISCONNECTED;
+            connectState = ServerConnectState.DISCONNECTED;
             callbackDisConn(QXError.ERROR_CONN_NET);
             callbackReConn();
 
@@ -403,7 +374,6 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
 
         @Override
         public void messageArrived(String topic, MqttMessage message) throws Exception {
-
 
             String msg = new String(message.getPayload());
             int qos = message.getQos();
@@ -417,16 +387,18 @@ public class QXMqttImpl implements IQXMqtt, IQXNetworkListener {
         }
     };
 
-    void reconnectWithDelay(long timeDelay) {
+    private synchronized void reconnectWithDelay(long timeDelay) {
+        final String taskKey = "reconnectWithDelay";
         QXLog.d(TAG, "reconnecting timeDelay = " + timeDelay);
-        QXTimerUtil.schedule("reconnectWithDelay", new TimerTask() {
+        QXTimerUtil.schedule(taskKey, new TimerTask() {
             @Override
             public void run() {
-                if (connectState == QXMqttConnectState.CONNECTED || connectState == QXMqttConnectState.CONNECTING) {
+                if (connectState == ServerConnectState.CONNECTED || connectState == ServerConnectState.CONNECTING) {
                     QXLog.e(TAG, "正在连接中，或已经连接成功，无需重复进行连接");
                     return;
                 }
                 connect();
+                QXTimerUtil.close(taskKey);
             }
         }, timeDelay);
 

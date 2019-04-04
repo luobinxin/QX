@@ -25,7 +25,7 @@ import cn.com.startai.qxsdk.busi.entity.UpdateDeviceInfo;
 import cn.com.startai.qxsdk.busi.entity.UpdateLoginPwd;
 import cn.com.startai.qxsdk.busi.entity.UpdateRemark;
 import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
-import cn.com.startai.qxsdk.connect.mqtt.QXMqttConnectState;
+import cn.com.startai.qxsdk.connect.mqtt.ServerConnectState;
 import cn.com.startai.qxsdk.db.bean.DeviceBean;
 import cn.com.startai.qxsdk.global.QXInitParam;
 
@@ -208,18 +208,12 @@ public interface IQXBusi {
     void init(@NonNull Application application, @NonNull QXInitParam qxInitParam);
 
     /**
-     * 添加监听
+     * 设置监听
      *
      * @param listener
      */
-    void addQXBusiListener(IQXBusiResultListener listener);
+    void setQXBusiListener(IQXBusiResultListener listener);
 
-    /**
-     * 注销监听
-     *
-     * @param listener
-     */
-    void removeQXBusiListener(IQXBusiResultListener listener);
 
     /**
      * 获取 app
@@ -240,7 +234,7 @@ public interface IQXBusi {
      *
      * @return
      */
-    QXMqttConnectState getServerConnectState();
+    ServerConnectState getServerConnectState();
 
     /**
      * 注销激活

@@ -25,12 +25,11 @@ import cn.com.startai.qxsdk.busi.entity.UpdateDeviceInfo;
 import cn.com.startai.qxsdk.busi.entity.UpdateLoginPwd;
 import cn.com.startai.qxsdk.busi.entity.UpdateRemark;
 import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
-import cn.com.startai.qxsdk.connect.BaseData;
-import cn.com.startai.qxsdk.connect.mqtt.QXMqttConnectState;
+import cn.com.startai.qxsdk.connect.mqtt.ServerConnectState;
 import cn.com.startai.qxsdk.db.bean.DeviceBean;
 import cn.com.startai.qxsdk.event.IQXBusi;
-import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.event.IQXBusiResultListener;
+import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.global.QXInitParam;
 
 /**
@@ -39,41 +38,49 @@ import cn.com.startai.qxsdk.global.QXInitParam;
  */
 public class QX implements IQXBusi {
 
-    private static QXBusiManager qxBusiManager;
-    private static QXUserManager qxUserManager;
-
-    public QXUserManager getQxUserManager() {
-        return qxUserManager;
+    //将构造函数私有化
+    private QX() {
     }
 
-    public void setQxUserManager(QXUserManager qxUserManager) {
-        QX.qxUserManager = qxUserManager;
+    public static QX getInstance() {
+        return SingleTonHoulder.singleTonInstance;
+    }
+
+    //静态内部类
+    public static class SingleTonHoulder {
+        private static final QX singleTonInstance = new QX();
+    }
+
+
+    private QXBusiManager qxBusiManager;
+    private QXUserManager qxUserManager;
+
+    public QXBusiManager getQxBusiManager() {
+        if (qxBusiManager == null) {
+            qxBusiManager = QXBusiManager.getInstance();
+        }
+        return qxBusiManager;
+    }
+
+    public QXUserManager getQxUserManager() {
+        if (qxUserManager == null) {
+            qxUserManager = QXUserManager.getInstance();
+        }
+        return qxUserManager;
     }
 
     public static final String TAG = "QX";
 
-    private QX() {
-        qxBusiManager = QXBusiManager.getInstance();
-        qxUserManager = QXUserManager.getInstance();
-    }
-
-    private static QX instance;
-
-    public static QX getInstance() {
-        if (instance == null) {
-            instance = new QX();
-        }
-        return instance;
-    }
 
     private boolean isDebug;
 
     public boolean isInit() {
-        return qxBusiManager.isInit();
+        return getQxBusiManager().isInit();
     }
 
     public Application getApp() {
-        return qxBusiManager.getApp();
+
+        return getQxBusiManager().getApp();
     }
 
     public void setDebug(boolean isDebug) {
@@ -87,7 +94,11 @@ public class QX implements IQXBusi {
     @Override
     public void init(@NonNull Application app, QXInitParam qxInitParam) {
 
-        qxBusiManager.init(app, qxInitParam);
+        getQxBusiManager().init(app, qxInitParam);
+    }
+
+    public void release() {
+        getQxBusiManager().release();
     }
 
     /**
@@ -96,40 +107,15 @@ public class QX implements IQXBusi {
      * @param listener
      */
     @Override
-    public void addQXBusiListener(IQXBusiResultListener listener) {
-        qxBusiManager.addQXBusiListener(listener);
-    }
+    public void setQXBusiListener(IQXBusiResultListener listener) {
 
-    /**
-     * 注销监听
-     *
-     * @param listener
-     */
-    @Override
-    public void removeQXBusiListener(IQXBusiResultListener listener) {
-        qxBusiManager.removeQXBusiListener(listener);
-    }
-
-    public void release() {
-        qxBusiManager.release();
+        getQxBusiManager().setQXBusiListener(listener);
     }
 
 
-    public void doSend(BaseData baseData, IQXCallListener listener) {
-        qxBusiManager.doSend(baseData, listener);
-    }
+    public ServerConnectState getServerConnectState() {
 
-
-    public QXBusiManager getQxBusiManager() {
-        return qxBusiManager.getInstance();
-    }
-
-
-    public QXMqttConnectState getServerConnectState() {
-        if (qxBusiManager.getQxMqtt() != null) {
-            return qxBusiManager.getQxMqtt().getQXMqttConnectState();
-        }
-        return QXMqttConnectState.DISCONNECTED;
+        return getQxBusiManager().getServerConnectState();
     }
 
     /**
@@ -139,7 +125,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void unActivite(IQXCallListener callListener) {
-        qxBusiManager.unActivite(callListener);
+
+
+        getQxBusiManager().unActivite(callListener);
     }
 
     /**
@@ -150,7 +138,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void passthrough(PassthroughReq req, IQXCallListener callListener) {
-        qxBusiManager.passthrough(req, callListener);
+
+
+        getQxBusiManager().passthrough(req, callListener);
     }
 
     /**
@@ -161,7 +151,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void updateRemark(UpdateRemark.Req req, IQXCallListener listener) {
-        qxBusiManager.updateRemark(req, listener);
+
+
+        getQxBusiManager().updateRemark(req, listener);
     }
 
     /**
@@ -172,7 +164,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void connectDevice(@NonNull DeviceBean deviceBean, IQXCallListener callListener) {
-        qxBusiManager.connectDevice(deviceBean, callListener);
+
+
+        getQxBusiManager().connectDevice(deviceBean, callListener);
     }
 
     /**
@@ -183,7 +177,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void disConnectDevice(@NonNull DeviceBean deviceBean, IQXCallListener callListener) {
-        qxBusiManager.disConnectDevice(deviceBean, callListener);
+
+
+        getQxBusiManager().disConnectDevice(deviceBean, callListener);
     }
 
     /**
@@ -193,7 +189,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void discovery(long timeMillims) {
-        qxBusiManager.discovery(timeMillims);
+
+
+        getQxBusiManager().discovery(timeMillims);
     }
 
     /**
@@ -201,7 +199,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void stopDiscovery() {
-        qxBusiManager.stopDiscovery();
+
+
+        getQxBusiManager().stopDiscovery();
     }
 
     /**
@@ -212,7 +212,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void bindDevice(@NonNull BindDeviceReq req, IQXCallListener callListener) {
-        qxBusiManager.bindDevice(req, callListener);
+
+
+        getQxBusiManager().bindDevice(req, callListener);
     }
 
     /**
@@ -223,7 +225,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void unBindDevice(@NonNull UnBindDeviceReq req, IQXCallListener callListener) {
-        qxBusiManager.unBindDevice(req, callListener);
+
+
+        getQxBusiManager().unBindDevice(req, callListener);
     }
 
     /**
@@ -234,7 +238,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getBindDeviceList(IQXCallListener callListener) {
-        qxBusiManager.getBindDeviceList(callListener);
+
+
+        getQxBusiManager().getBindDeviceList(callListener);
     }
 
     /**
@@ -244,7 +250,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getLatestVersion(IQXCallListener callListener) {
-        qxBusiManager.getLatestVersion(callListener);
+
+
+        getQxBusiManager().getLatestVersion(callListener);
     }
 
     /**
@@ -255,7 +263,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void updateLoginPwd(UpdateLoginPwd.Req req, IQXCallListener callListener) {
-        qxBusiManager.updateLoginPwd(req, callListener);
+
+
+        getQxBusiManager().updateLoginPwd(req, callListener);
     }
 
     /**
@@ -266,7 +276,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void updateUserInfo(UpdateUserInfo.Req req, IQXCallListener callListener) {
-        qxBusiManager.updateUserInfo(req, callListener);
+
+
+        getQxBusiManager().updateUserInfo(req, callListener);
     }
 
     /**
@@ -276,8 +288,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getUserInfo(IQXCallListener callListener) {
-        qxBusiManager.getUserInfo(callListener);
 
+
+        getQxBusiManager().getUserInfo(callListener);
     }
 
     /**
@@ -288,7 +301,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void sendEmail(SendEmail.Req req, IQXCallListener callListener) {
-        qxBusiManager.sendEmail(req, callListener);
+
+
+        getQxBusiManager().sendEmail(req, callListener);
     }
 
     /**
@@ -299,7 +314,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void loginWithThirdAccount(LoginWithThirdAccount.Req req, IQXCallListener callListener) {
-        qxBusiManager.loginWithThirdAccount(req, callListener);
+
+
+        getQxBusiManager().loginWithThirdAccount(req, callListener);
     }
 
     /**
@@ -307,7 +324,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void logout() {
-        qxBusiManager.logout();
+
+
+        getQxBusiManager().logout();
     }
 
     /**
@@ -318,7 +337,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void login(@NonNull Login.Req req, IQXCallListener callListener) {
-        qxBusiManager.login(req, callListener);
+
+
+        getQxBusiManager().login(req, callListener);
     }
 
     /**
@@ -329,7 +350,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void register(@NonNull Register.Req req, IQXCallListener callListener) {
-        qxBusiManager.register(req, callListener);
+
+
+        getQxBusiManager().register(req, callListener);
     }
 
     /**
@@ -340,7 +363,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getIdentifyCode(@NonNull GetIdentifyCode.Req req, IQXCallListener callListener) {
-        qxBusiManager.getIdentifyCode(req, callListener);
+
+
+        getQxBusiManager().getIdentifyCode(req, callListener);
     }
 
     /**
@@ -351,7 +376,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void checkIdentifyCode(@NonNull CheckIdentifyCode.Req req, IQXCallListener callListener) {
-        qxBusiManager.checkIdentifyCode(req, callListener);
+
+
+        getQxBusiManager().checkIdentifyCode(req, callListener);
     }
 
     /**
@@ -362,7 +389,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void hardwareActivate(Activate.Req req, IQXCallListener callListener) {
-        qxBusiManager.hardwareActivate(req, callListener);
+
+
+        getQxBusiManager().hardwareActivate(req, callListener);
     }
 
     /**
@@ -373,7 +402,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void updateDeviceInfo(UpdateDeviceInfo.Req req, IQXCallListener callListener) {
-        qxBusiManager.updateDeviceInfo(req, callListener);
+
+
+        getQxBusiManager().updateDeviceInfo(req, callListener);
     }
 
     /**
@@ -384,7 +415,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void resetLoginPwd(ResetLoginPwd.Req req, IQXCallListener callListener) {
-        qxBusiManager.resetLoginPwd(req, callListener);
+
+
+        getQxBusiManager().resetLoginPwd(req, callListener);
     }
 
     /**
@@ -395,7 +428,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void thirdPaymentUnifiedOrder(ThirdPaymentUnifiedOrder.Req req, IQXCallListener callListener) {
-        qxBusiManager.thirdPaymentUnifiedOrder(req, callListener);
+
+
+        getQxBusiManager().thirdPaymentUnifiedOrder(req, callListener);
     }
 
     /**
@@ -406,7 +441,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getRealOrderPayStatus(String orderNum, IQXCallListener callListener) {
-        qxBusiManager.getRealOrderPayStatus(orderNum, callListener);
+
+
+        getQxBusiManager().getRealOrderPayStatus(orderNum, callListener);
     }
 
     /**
@@ -417,7 +454,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getAlipayAuthInfo(String authType, IQXCallListener callListener) {
-        qxBusiManager.getAlipayAuthInfo(authType, callListener);
+
+
+        getQxBusiManager().getAlipayAuthInfo(authType, callListener);
     }
 
     /**
@@ -428,7 +467,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void bindMobileNum(BindMobile.Req req, IQXCallListener callListener) {
-        qxBusiManager.bindMobileNum(req, callListener);
+
+
+        getQxBusiManager().bindMobileNum(req, callListener);
     }
 
     /**
@@ -439,7 +480,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void unBindThirdAccount(UnBindThirdAccount.Req req, IQXCallListener callListener) {
-        qxBusiManager.unBindThirdAccount(req, callListener);
+
+
+        getQxBusiManager().unBindThirdAccount(req, callListener);
     }
 
     /**
@@ -450,7 +493,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void bindThirdAccount(BindThirdAccount.Req req, IQXCallListener callListener) {
-        qxBusiManager.bindThirdAccount(req, callListener);
+
+
+        getQxBusiManager().bindThirdAccount(req, callListener);
     }
 
     /**
@@ -461,7 +506,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getWeatherInfo(GetWeatherInfo.Req req, IQXCallListener callListener) {
-        qxBusiManager.getWeatherInfo(req, callListener);
+
+
+        getQxBusiManager().getWeatherInfo(req, callListener);
     }
 
     /**
@@ -472,7 +519,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void bindEmail(BindEmail.Req req, IQXCallListener callListener) {
-        qxBusiManager.bindEmail(req, callListener);
+
+
+        getQxBusiManager().bindEmail(req, callListener);
     }
 
     /**
@@ -483,6 +532,9 @@ public class QX implements IQXBusi {
      */
     @Override
     public void getBindListByPage(GetBindList.Req req, IQXCallListener callListener) {
-        qxBusiManager.getBindListByPage(req, callListener);
+
+
+        getQxBusiManager().getBindListByPage(req, callListener);
     }
+
 }

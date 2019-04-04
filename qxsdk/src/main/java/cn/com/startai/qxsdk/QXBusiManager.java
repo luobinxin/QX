@@ -52,7 +52,7 @@ import cn.com.startai.qxsdk.connect.ble.IQXBLE;
 import cn.com.startai.qxsdk.connect.ble.QXBleImpl;
 import cn.com.startai.qxsdk.connect.mqtt.BaseMessage;
 import cn.com.startai.qxsdk.connect.mqtt.IQXMqtt;
-import cn.com.startai.qxsdk.connect.mqtt.QXMqttConnectState;
+import cn.com.startai.qxsdk.connect.mqtt.ServerConnectState;
 import cn.com.startai.qxsdk.connect.mqtt.QXMqttData;
 import cn.com.startai.qxsdk.connect.mqtt.TopicConsts;
 import cn.com.startai.qxsdk.connect.mqtt.client.QXMqttConfig;
@@ -75,7 +75,6 @@ import cn.com.startai.qxsdk.db.bean.UserBean;
 import cn.com.startai.qxsdk.event.IQXCallListener;
 import cn.com.startai.qxsdk.event.IQXBusi;
 import cn.com.startai.qxsdk.event.IQXBusiResultListener;
-import cn.com.startai.qxsdk.event.QXEventManager;
 import cn.com.startai.qxsdk.global.AreaNodesManager;
 import cn.com.startai.qxsdk.global.LooperManager;
 import cn.com.startai.qxsdk.global.QXCallbackManager;
@@ -101,30 +100,29 @@ import static cn.com.startai.qxsdk.QX.TAG;
  */
 public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBack, IQXUDPListener, OnUdpTaskCallBack, IQXNetworkListener {
 
-
-    private boolean isNeedCallBackUpdateDeviceInfo;
-
+    //将构造函数私有化
     private QXBusiManager() {
     }
 
-
-    private static QXBusiManager instance;
-
-
-    public static void setInstance(QXBusiManager instance) {
-        QXBusiManager.instance = instance;
+    public static QXBusiManager getInstance() {
+        return SingleTonHoulder.singleTonInstance;
     }
 
+    //静态内部类
+    private static class SingleTonHoulder {
+        private static final QXBusiManager singleTonInstance = new QXBusiManager();
+    }
+
+
+    private boolean isNeedCallBackUpdateDeviceInfo;
+
+
+    private Application app;
 
     private IQXMqtt qxMqtt;
     private IQXBLE qxBle;
     private IQXUDP qxUdp;
-    private Application app;
 
-    private BroadcastDiscoveryUtil broadcastDiscoveryUtil;
-
-
-    private QXEventManager eventManager;
 
     public IQXUDP getQxUdp() {
         return qxUdp;
@@ -158,17 +156,21 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         return this.app != null;
     }
 
+    private IQXBusiResultListener busiResultListener;
+    private BroadcastDiscoveryUtil broadcastDiscoveryUtil;
+
+
     /**
      * 获取与服务器的连接状态
      *
      * @return
      */
     @Override
-    public QXMqttConnectState getServerConnectState() {
+    public ServerConnectState getServerConnectState() {
         if (getQxMqtt() != null) {
             return getQxMqtt().getQXMqttConnectState();
         }
-        return QXMqttConnectState.DISCONNECTED;
+        return ServerConnectState.DISCONNECTED;
     }
 
     /**
@@ -185,34 +187,20 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         this.app = app;
     }
 
-    public QXEventManager getEventManager() {
-        if (eventManager == null) {
-            eventManager = QXEventManager.getInstance();
-        }
-        return eventManager;
-    }
-
-    public void setEventManager(QXEventManager eventManager) {
-        this.eventManager = eventManager;
-    }
 
     private BaseMiofBusiHandler busiHandler;
     //协议解析器
     private AbsProtocolProcessor pm;
 
     public BaseMiofBusiHandler getBusiHandler() {
+        if (busiHandler == null) {
+            busiHandler = new BaseMiofBusiHandler(this);
+        }
         return busiHandler;
     }
 
     public void setBusiHandler(BaseMiofBusiHandler busiHandler) {
         this.busiHandler = busiHandler;
-    }
-
-    public static QXBusiManager getInstance() {
-        if (instance == null) {
-            instance = new QXBusiManager();
-        }
-        return instance;
     }
 
     public void init(Application app, QXInitParam qxInitParam) {
@@ -251,15 +239,22 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         broadcastDiscoveryUtil = new BroadcastDiscoveryUtil(LooperManager.getInstance().getWorkLooper(), getQxUdp(), this);
 
 
-        getQxMqtt().setListener(this);
-        getQxUdp().setListener(this);
         pm = ProtocolProcessorFactory.newMultiChannelSingleTask(LooperManager.getInstance().getProtocolLooper(),
                 new ProtocolTaskImpl(this, getApp()),
                 QXParamManager.getInstance().getmProtocolVersion(), true);
-        busiHandler = new BaseMiofBusiHandler(this);
 
+
+        getQxMqtt().setListener(this);
         getQxMqtt().init();
         QXNetworkManager.getInstance().addNetworkListener(this);
+
+        String userId = QXUserManager.getInstance().getUserId();
+        if (!TextUtils.isEmpty(userId)) {
+            //如果已经登录，则初始化 udp
+            getQxUdp().setListener(this);
+            getQxUdp().init();
+        }
+
     }
 
     /**
@@ -268,19 +263,9 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      * @param listener
      */
     @Override
-    public void addQXBusiListener(IQXBusiResultListener listener) {
-        getEventManager().addQXBusiResultListener(listener);
+    public void setQXBusiListener(IQXBusiResultListener listener) {
+        this.busiResultListener = listener;
 
-    }
-
-    /**
-     * 注销监听
-     *
-     * @param listener
-     */
-    @Override
-    public void removeQXBusiListener(IQXBusiResultListener listener) {
-        getEventManager().removeBusiResultListener(listener);
     }
 
     public void release() {
@@ -317,15 +302,7 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         }
     }
 
-    public void addListener(IQXBusiResultListener listener) {
-        getEventManager().addQXBusiResultListener(listener);
-    }
 
-    public void removeListener(IQXBusiResultListener listener) {
-        if (getEventManager() != null) {
-            getEventManager().removeBusiResultListener(listener);
-        }
-    }
     // --------------------------- IQxMqttListener start ------------------------------
 
     @Override
@@ -334,14 +311,16 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         subUserOrSnTopic();
 
         if (QXSpController.getIsActivite()) {
-            getEventManager().onServerConnected();
-            checkAreNode();
-            reportIp();
-            checkUnCompleteMsg();
-            subFriendReportTopic();
-            checkIsAvaliToken();
-        } else {
-            checkActivate();
+            if (busiResultListener != null) {
+                busiResultListener.onServerConnected();
+                checkAreNode();
+                reportIp();
+                checkUnCompleteMsg();
+                subFriendReportTopic();
+                checkIsAvaliToken();
+            } else {
+                checkActivate();
+            }
         }
     }
 
@@ -404,9 +383,11 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
             if (expire_in > 0 && diff > 0) {
                 QXLog.d(TAG, "账号登录状态已过期，需要重新登录");
                 QXUserManager.getInstance().resetUser();
-                getEventManager().onLoginExpired();
-            } else {
-                QXLog.d(TAG, "账号登录状态正常，可以正常使用");
+                if (busiResultListener != null) {
+                    busiResultListener.onLoginExpired();
+                } else {
+                    QXLog.d(TAG, "账号登录状态正常，可以正常使用");
+                }
             }
 
         }
@@ -479,7 +460,7 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
                     BaseData activateData = QXReqDataCreater.getActivateData(null);
                     doSend(activateData, null);
                 } else {
-                    QXLog.e(TAG, "设备已经正常激活");
+                    QXLog.d(TAG, "设备已经正常激活");
                     QXTimerUtil.close(timerKey);
                 }
             }
@@ -489,12 +470,16 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
 
     @Override
     public void onMqttDisconnected(QXError qxError) {
-        getEventManager().onServerDisConnect(qxError);
+        if (busiResultListener != null) {
+            busiResultListener.onServerDisConnect(qxError);
+        }
     }
 
     @Override
     public void onMqttReconnecting() {
-        getEventManager().onServerReConnecting();
+        if (busiResultListener != null) {
+            busiResultListener.onServerReConnecting();
+        }
     }
 
     @Override
@@ -855,8 +840,10 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
 
         }
 
-        QXEventManager.getInstance().onLoginResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onLoginResult(resp);
 
+        }
     }
 
     @Override
@@ -869,19 +856,25 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         QXSpController.setIsActivite(true);
         checkAreNode();
 
-        getEventManager().onServerConnected();
+        if (busiResultListener != null) {
+            busiResultListener.onServerConnected();
 
+        }
     }
 
     @Override
     public void onHardwareActivateResult(Activate.Resp resp) {
-        getEventManager().onHardwareActivateResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onHardwareActivateResult(resp);
+        }
     }
 
     @Override
     public void onUpdateDeviceInfoResult(UpdateDeviceInfo.Resp resp) {
         if (isNeedCallBackUpdateDeviceInfo) {
-            getEventManager().onUpdateDeviceInfoResult(resp);
+            if (busiResultListener != null) {
+                busiResultListener.onUpdateDeviceInfoResult(resp);
+            }
         }
 
     }
@@ -954,13 +947,17 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
     @Override
     public void onGetIdentifyCodeResult(GetIdentifyCode.Resp resp) {
 
-        getEventManager().onGetIdentifyCodeResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onGetIdentifyCodeResult(resp);
 
+        }
     }
 
     @Override
     public void onCheckIdentifyCodeResult(CheckIdentifyCode.Resp resp) {
-        getEventManager().onCheckIdetifyResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onCheckIdetifyResult(resp);
+        }
     }
 
     @Override
@@ -976,13 +973,17 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
     @Override
     public void onRegisterResult(Register.Resp resp) {
 
-        getEventManager().onRegisterResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onRegisterResult(resp);
 
+        }
     }
 
     @Override
     public void onSendEmail(SendEmail.Resp resp) {
-        getEventManager().onSendEmailResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onSendEmailResult(resp);
+        }
     }
 
     @Override
@@ -999,7 +1000,9 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
 
         }
 
-        getEventManager().onUpdateUserInfoResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onUpdateUserInfoResult(resp);
+        }
     }
 
     @Override
@@ -1018,23 +1021,31 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
 
         }
 
-        getEventManager().onGetUserInfoResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onGetUserInfoResult(resp);
 
+        }
     }
 
     @Override
     public void onGetLatestAppVersionResult(GetLatestAppVersion.Resp resp) {
-        getEventManager().onGetLatestVersionResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onGetLatestVersionResult(resp);
+        }
     }
 
     @Override
     public void onResetLoginPwdResult(ResetLoginPwd.Resp resp) {
-        getEventManager().onResetLoginPwdResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onResetLoginPwdResult(resp);
+        }
     }
 
     @Override
     public void onUpdateLoginPwdResult(UpdateLoginPwd.Resp resp) {
-        getEventManager().onUpdateLoginPwdResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onUpdateLoginPwdResult(resp);
+        }
     }
 
     @Override
@@ -1055,7 +1066,9 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
             }
         }
 
-        getEventManager().onUnActiviteResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onUnActiviteResult(resp);
+        }
     }
 
     @Override
@@ -1167,7 +1180,9 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
             }
         }
 
-        getEventManager().onBindEmailResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onBindEmailResult(resp);
+        }
     }
 
     @Override
@@ -1177,17 +1192,14 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
 
     @Override
     public void onUnBindThirdAccountResult(UnBindThirdAccount.Resp resp) {
-
     }
 
     @Override
     public void onGetWeatherInfoResult(GetWeatherInfo.Resp resp) {
-
     }
 
     @Override
     public void onBindMobileResult(BindMobile.Resp resp) {
-
         if (resp.getResult() == BaseMessage.RESULT_SUCCESS) {
 
             UserBean userByUserid = QXDBManager.getInstance().getUserByUserid(resp.getContent().getUserid());
@@ -1197,22 +1209,21 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
             }
         }
 
-        getEventManager().onBindMobileNumResult(resp);
+        if (busiResultListener != null) {
+            busiResultListener.onBindMobileNumResult(resp);
+        }
     }
 
     @Override
     public void onGetAlipayAuthInfoResult(GetAlipayAuthInfo.Resp resp) {
-
     }
 
     @Override
     public void onGetRealPayResult(GetRealPayResult.Resp resp) {
-
     }
 
     @Override
     public void onThirdPaymentUnifiedOrderResult(ThirdPaymentUnifiedOrder.Resp resp) {
-
     }
 
     //------------------- OnMqttTaskCallBack end----------------------
@@ -1228,7 +1239,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void passthrough(PassthroughReq req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1239,7 +1249,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void updateRemark(UpdateRemark.Req req, IQXCallListener listener) {
-
     }
 
     /**
@@ -1250,7 +1259,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void connectDevice(@NonNull DeviceBean deviceBean, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1261,7 +1269,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void disConnectDevice(@NonNull DeviceBean deviceBean, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1292,7 +1299,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void bindDevice(@NonNull BindDeviceReq req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1303,7 +1309,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void unBindDevice(@NonNull UnBindDeviceReq req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1314,7 +1319,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getBindDeviceList(IQXCallListener callListener) {
-
     }
 
     /**
@@ -1356,7 +1360,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getUserInfo(IQXCallListener callListener) {
-
         doSend(QXReqDataCreater.getUserInfoData(), callListener);
     }
 
@@ -1379,7 +1382,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void loginWithThirdAccount(LoginWithThirdAccount.Req req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1399,8 +1401,10 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
         getQxMqtt().disconnectAndReconnect();
 
         QXLog.e(TAG, "登出成功");
-        getEventManager().onLogoutResult(1);
+        if (busiResultListener != null) {
+            busiResultListener.onLogoutResult(1);
 
+        }
     }
 
     /**
@@ -1447,7 +1451,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void checkIdentifyCode(@NonNull CheckIdentifyCode.Req req, IQXCallListener callListener) {
-
         doSend(QXReqDataCreater.getCheckIdentifyCodeData(req), callListener);
     }
 
@@ -1471,7 +1474,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void updateDeviceInfo(UpdateDeviceInfo.Req req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1493,7 +1495,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void thirdPaymentUnifiedOrder(ThirdPaymentUnifiedOrder.Req contentBean, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1504,7 +1505,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getRealOrderPayStatus(String orderNum, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1515,7 +1515,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getAlipayAuthInfo(String authType, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1537,7 +1536,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void unBindThirdAccount(UnBindThirdAccount.Req req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1548,7 +1546,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void bindThirdAccount(BindThirdAccount.Req req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1559,7 +1556,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getWeatherInfo(GetWeatherInfo.Req req, IQXCallListener callListener) {
-
     }
 
     /**
@@ -1570,7 +1566,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void bindEmail(BindEmail.Req req, IQXCallListener callListener) {
-
         doSend(QXReqDataCreater.getBindEmailData(req), callListener);
     }
 
@@ -1582,7 +1577,6 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
      */
     @Override
     public void getBindListByPage(GetBindList.Req req, IQXCallListener callListener) {
-
     }
 
     //------------------- IQXBusi end----------------------
@@ -1591,22 +1585,18 @@ public class QXBusiManager implements IQXBusi, IQxMqttListener, OnMqttTaskCallBa
     //------------------- IQXNetworkListener start----------------------
     @Override
     public void onWifiConnected() {
-
     }
 
     @Override
     public void onMobileConnected() {
-
     }
 
     @Override
     public void onEthernetConnected() {
-
     }
 
     @Override
     public void onUnkownNetwork() {
-
     }
 
     @Override

@@ -23,21 +23,19 @@ public class QXUDPImpl implements IQXUDP {
 
     private IQXUDPListener udpListener;
 
+
     private QXUDPImpl() {
     }
 
-    private static volatile QXUDPImpl instance;
-
-    public static IQXUDP getInstance() {
-        if (instance == null) {
-            synchronized (QXUDPImpl.class) {
-                if (instance == null) {
-                    instance = new QXUDPImpl();
-                }
-            }
-        }
-        return instance;
+    public static QXUDPImpl getInstance() {
+        return SingleTonHoulder.singleTonInstance;
     }
+
+
+    private static class SingleTonHoulder {
+        private static final QXUDPImpl singleTonInstance = new QXUDPImpl();
+    }
+
 
     @Override
     public void init() {

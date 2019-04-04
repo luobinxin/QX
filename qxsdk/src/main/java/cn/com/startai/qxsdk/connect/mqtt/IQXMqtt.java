@@ -18,11 +18,11 @@ public interface IQXMqtt extends IConnectBusi {
 
     void publish(QXMqttData data, IQXCallListener listener);
 
-    void subscribe(List<String> topic, final IQXCallListener IQXCallListener);
+    void subscribe(List<String> topic, final IQXCallListener callListener);
 
-    void subscribeSync(List<String> topic, final IQXCallListener IQXCallListener);
+    void subscribeSync(List<String> topic, final IQXCallListener callListener);
 
-    void unSubscribe(List<String> topic, final IQXCallListener IQXCallListener);
+    void unSubscribe(List<String> topic, final IQXCallListener callListener);
 
     void setListener(IQxMqttListener listener);
 
@@ -30,7 +30,10 @@ public interface IQXMqtt extends IConnectBusi {
 
     IMqttAsyncClient getClient();
 
-    QXMqttConnectState getQXMqttConnectState();
+    ServerConnectState getQXMqttConnectState();
 
     void disconnectAndReconnect();
+
+    void disconnect(boolean isRelease);
+
 }

@@ -5,6 +5,8 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import cn.com.startai.qxsdk.busi.entity.Activate;
+import cn.com.startai.qxsdk.busi.entity.BindEmail;
+import cn.com.startai.qxsdk.busi.entity.BindMobile;
 import cn.com.startai.qxsdk.busi.entity.BrokerHost;
 import cn.com.startai.qxsdk.busi.entity.CheckIdentifyCode;
 import cn.com.startai.qxsdk.busi.entity.GetIdentifyCode;
@@ -158,10 +160,10 @@ public class BaseMiofBusiHandler {
 //
 //                break;
 //
-//            case BindMobile.MSGTYPE: //查询 支付宝密钥
-//                BindMobile.m_resp(msg);
-//
-//                break;
+            case MsgType.TYPE_BIND_MOBILE_NUM: //绑定手机号
+                BindMobile.handlerMsg(msg, callback);
+
+                break;
 //            case GetWeatherInfo.MSGTYPE://查询天气
 //                GetWeatherInfo.m_resp(msg);
 //                break;
@@ -178,10 +180,10 @@ public class BaseMiofBusiHandler {
 //                GetBindList.m_resp(msg);
 //
 //                break;
-//            case BindEmail.MSGTYPE: //绑定邮箱
-//                BindEmail.m_resp(msg);
-//
-//            break;
+            case MsgType.TYPE_BIND_EMAIL: //绑定邮箱
+                BindEmail.handlerMsg(msg, callback);
+
+                break;
 
             default:
                 //sdk未处理的数据 将直接回调到应用层

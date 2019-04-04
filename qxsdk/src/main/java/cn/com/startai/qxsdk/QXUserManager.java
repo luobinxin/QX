@@ -12,17 +12,19 @@ import cn.com.startai.qxsdk.db.bean.UserBean;
  */
 public class QXUserManager {
 
-    private static QXUserManager instance;
-
-    public static QXUserManager getInstance() {
-        if (instance == null) {
-            instance = new QXUserManager();
-        }
-        return instance;
-    }
-
+    //将构造函数私有化
     private QXUserManager() {
     }
+
+    public static QXUserManager getInstance() {
+        return SingleTonHoulder.singleTonInstance;
+    }
+
+    //静态内部类
+    public static class SingleTonHoulder {
+        private static final QXUserManager singleTonInstance = new QXUserManager();
+    }
+
 
     private String userId;
     private UserBean currUser;
