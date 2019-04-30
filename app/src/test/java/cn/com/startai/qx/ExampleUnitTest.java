@@ -1,5 +1,7 @@
 package cn.com.startai.qx;
 
+import android.util.Log;
+
 import org.junit.Test;
 
 import static org.junit.Assert.*;
@@ -13,5 +15,9 @@ public class ExampleUnitTest {
     @Test
     public void addition_isCorrect() {
         assertEquals(4, 2 + 2);
+    }
+    public static void main(String[] args){
+        int a = 0x1415;
+        Log.i("aaa", "a = " + a);
     }
 }

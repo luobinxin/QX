@@ -1,6 +1,6 @@
 package cn.com.startai.qxsdk.global;
 
-import cn.com.startai.qxsdk.busi.entity.BrokerHost;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BrokerHost;
 
 /**
  * Created by Robin on 2019/3/29.

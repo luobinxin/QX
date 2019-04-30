@@ -3,29 +3,30 @@ package cn.com.startai.qxsdk.event;
 import android.app.Application;
 import android.support.annotation.NonNull;
 
-import cn.com.startai.qxsdk.busi.BusiEntity.BindDeviceReq;
-import cn.com.startai.qxsdk.busi.BusiEntity.PassthroughReq;
-import cn.com.startai.qxsdk.busi.BusiEntity.UnBindDeviceReq;
-import cn.com.startai.qxsdk.busi.entity.Activate;
-import cn.com.startai.qxsdk.busi.entity.BindEmail;
-import cn.com.startai.qxsdk.busi.entity.BindMobile;
-import cn.com.startai.qxsdk.busi.entity.BindThirdAccount;
-import cn.com.startai.qxsdk.busi.entity.CheckIdentifyCode;
-import cn.com.startai.qxsdk.busi.entity.GetBindList;
-import cn.com.startai.qxsdk.busi.entity.GetIdentifyCode;
-import cn.com.startai.qxsdk.busi.entity.GetWeatherInfo;
-import cn.com.startai.qxsdk.busi.entity.Login;
-import cn.com.startai.qxsdk.busi.entity.LoginWithThirdAccount;
-import cn.com.startai.qxsdk.busi.entity.Register;
-import cn.com.startai.qxsdk.busi.entity.ResetLoginPwd;
-import cn.com.startai.qxsdk.busi.entity.SendEmail;
-import cn.com.startai.qxsdk.busi.entity.ThirdPaymentUnifiedOrder;
-import cn.com.startai.qxsdk.busi.entity.UnBindThirdAccount;
-import cn.com.startai.qxsdk.busi.entity.UpdateDeviceInfo;
-import cn.com.startai.qxsdk.busi.entity.UpdateLoginPwd;
-import cn.com.startai.qxsdk.busi.entity.UpdateRemark;
-import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
-import cn.com.startai.qxsdk.connect.mqtt.ServerConnectState;
+import cn.com.startai.qxsdk.busi.common.BindDeviceReq;
+import cn.com.startai.qxsdk.busi.common.GetBindListReq;
+import cn.com.startai.qxsdk.busi.common.PassthroughReq;
+import cn.com.startai.qxsdk.busi.common.UnBindDeviceReq;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Activate;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindEmail;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindMobile;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindThirdAccount;
+import cn.com.startai.qxsdk.channel.mqtt.entity.CheckIdentifyCode;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetIdentifyCode;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetRealPayResult;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetWeatherInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Login;
+import cn.com.startai.qxsdk.channel.mqtt.entity.LoginWithThirdAccount;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Register;
+import cn.com.startai.qxsdk.channel.mqtt.entity.ResetLoginPwd;
+import cn.com.startai.qxsdk.channel.mqtt.entity.SendEmail;
+import cn.com.startai.qxsdk.channel.mqtt.entity.ThirdPaymentUnifiedOrder;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UnBindThirdAccount;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateDeviceInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateLoginPwd;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateRemark;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateUserInfo;
+import cn.com.startai.qxsdk.channel.mqtt.ServerConnectState;
 import cn.com.startai.qxsdk.db.bean.DeviceBean;
 import cn.com.startai.qxsdk.global.QXInitParam;
 
@@ -96,14 +97,6 @@ public interface IQXBusi {
      * @param callListener
      */
     void unBindDevice(@NonNull UnBindDeviceReq req, IQXCallListener callListener);
-
-    /**
-     * 查询绑定关系
-     *
-     * @return
-     */
-    void getBindDeviceList(IQXCallListener callListener);
-
 
     /**
      * 获取最新软件版本
@@ -271,7 +264,7 @@ public interface IQXBusi {
     /**
      * 查询真实订单支付结果
      */
-    void getRealOrderPayStatus(String orderNum, IQXCallListener callListener);
+    void getRealOrderPayStatus(GetRealPayResult.Req req, IQXCallListener callListener);
 
     /**
      * 查询支付宝认证信息
@@ -321,9 +314,9 @@ public interface IQXBusi {
     void bindEmail(BindEmail.Req req, IQXCallListener callListener);
 
     /**
-     * 查询 绑定列表 分页
+     * 查询 绑定列表
      */
-    void getBindListByPage(GetBindList.Req req, IQXCallListener callListener);
+    void getBindList(GetBindListReq req, IQXCallListener callListener);
 
 
 }

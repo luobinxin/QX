@@ -8,12 +8,15 @@ public class QXErrorCode {
 
     public static final String UNKOWN = "3000";
 
+
     public static final String ERROR_CONN_NET = "4001";
     public static final String ERROR_CONN_AUTHENTICATION = "4002";
     public static final String ERROR_CONN_CER = "4003";
     public static final String ERROR_CONN_TIMEROUT = "4004";
     public static final String ERROR_CONN_SERVER = "4005";
     public static final String ERROR_CONN_UNKNOW = "4006";
+    public static final String ERROR_CONN_DEVICE_CAN_NOT_COMMUNICATE = "4007";
+
 
     public static final String ERROR_SEND_CLIENT_DISCONNECT = "5001";
     public static final String ERROR_SEND_TIMEOUT = "5002";
@@ -24,6 +27,8 @@ public class QXErrorCode {
     public static final String ERROR_SEND_PARAM_INVALIBLE = "5008";
     public static final String ERROR_SEND_NO_FID = "5009";
     public static final String ERROR_SEND_MESSYCODE = "5010";
+    public static final String ERROR_SEND_SEND_LAN_FAILED = "5011";
+    public static final String ERROR_SEND_DEVICE_CAN_NOT_COMMUNICATE = "5012";
 
 
     public static final String ERROR_LOST_SAME_CLIENTID = "6001";//帐号在别处登录
@@ -96,6 +101,10 @@ public class QXErrorCode {
                 errorMsg = "消息发送失败，超时";
 
                 break;
+            case ERROR_SEND_SEND_LAN_FAILED:
+
+                errorMsg = "消息发送失败，局域网发送失败";
+                break;
             case ERROR_SEND_CLIENT_DISCONNECT:
 
                 errorMsg = "消息发送失败，未连接";
@@ -114,6 +123,13 @@ public class QXErrorCode {
                 break;
             case ERROR_CONN_AUTHENTICATION:
                 errorMsg = "连接失败，认证失败";
+                break;
+            case ERROR_CONN_DEVICE_CAN_NOT_COMMUNICATE:
+                errorMsg = "连接失败，设备无法通信 ";
+                break;
+
+            case ERROR_SEND_DEVICE_CAN_NOT_COMMUNICATE:
+                errorMsg = "发送消息失败，设备无法通信 ";
                 break;
             case ERROR_SUB_UNVALIABLE_TOPIC:
                 errorMsg = "订阅失败，主题格式非法";

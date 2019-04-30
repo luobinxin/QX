@@ -42,6 +42,8 @@ public class QXUserManager {
 
     }
 
+
+
     public String getUserId() {
         if (QX.getInstance().isInit()) {
             if (TextUtils.isEmpty(userId)) {
@@ -77,4 +79,7 @@ public class QXUserManager {
         this.currUser = userBean;
         this.userId = userBean.getUserId();
     }
+
+
+
 }

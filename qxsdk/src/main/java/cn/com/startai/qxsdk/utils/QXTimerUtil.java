@@ -73,6 +73,7 @@ public class QXTimerUtil {
     }
 
     public static void closeAll() {
+
         Collection<Timer> values = timers.values();
         for (Timer value : values) {
             value.cancel();

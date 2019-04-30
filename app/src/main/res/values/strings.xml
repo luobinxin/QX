@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">QX</string>
+
+    <string name="facebook_app_id">387386421991321</string>
+    <string name="fb_login_protocol_scheme">fb387386421991321</string>
 </resources>

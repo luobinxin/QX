@@ -22,9 +22,9 @@ public class QXParamManager implements ParamConsts {
 
     private String appid;
 
-    private byte mProtocolVersion = VERSION_SEQ;
-    private byte mCustom = CUSTOM_STARTAI;
-    private byte mProduct = PRODUCT_MUSIK;
+    private Byte mProtocolVersion;
+    private Byte mCustom;
+    private Byte mProduct;
     private boolean needCustomerFilter = true;
 
 
@@ -36,29 +36,34 @@ public class QXParamManager implements ParamConsts {
         this.appid = appid;
     }
 
-    public byte getmProtocolVersion() {
+    public Byte getmProtocolVersion() {
         return mProtocolVersion;
     }
 
-    public void setmProtocolVersion(byte mProtocolVersion) {
+    public void setmProtocolVersion(Byte mProtocolVersion) {
         this.mProtocolVersion = mProtocolVersion;
     }
 
-    public byte getmCustom() {
+    public Byte getmCustom() {
         return mCustom;
     }
 
-    public void setmCustom(byte mCustom) {
+    public void setmCustom(Byte mCustom) {
         this.mCustom = mCustom;
     }
 
-    public byte getmProduct() {
+    public Byte getmProduct() {
         return mProduct;
     }
 
-    public void setmProduct(byte mProduct) {
+    public void setmProduct(Byte mProduct) {
         this.mProduct = mProduct;
     }
+
+    public boolean isUdpParamInit() {
+        return mProtocolVersion != null && mCustom != null && mProduct != null;
+    }
+
 
     public boolean isNeedCustomerFilter() {
         return needCustomerFilter;

@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import cn.com.startai.qxsdk.db.bean.DeviceBean;
-import cn.com.startai.qxsdk.db.bean.TopicBean;
 import cn.com.startai.qxsdk.db.bean.UserBean;
 import cn.com.startai.qxsdk.utils.QXLog;
 
@@ -109,7 +108,8 @@ public class QXDBManager {
                     .findFirst();
 
             deviceBean.setUpdateTime(System.currentTimeMillis());
-
+            long weightValue = deviceBean.getWeightValue();
+            deviceBean.setWeightValue(++weightValue);
             if (first == null) {
                 deviceBean.setAddTime(System.currentTimeMillis());
                 db.saveBindingId(deviceBean);
@@ -237,7 +237,7 @@ public class QXDBManager {
         try {
             all = db.selector(DeviceBean.class)
                     .where(DeviceBean.F_USERID, "=", userId)
-                    .and(DeviceBean.F_ISLANBIND, "=", true)
+                    .and(DeviceBean.F_LANBIND, "=", true)
                     .findAll();
         } catch (DbException e) {
             e.printStackTrace();
@@ -255,7 +255,7 @@ public class QXDBManager {
         try {
             all = db.selector(DeviceBean.class)
                     .where(DeviceBean.F_USERID, "=", userId)
-                    .and(DeviceBean.F_ISWANBIND, "=", true)
+                    .and(DeviceBean.F_WANBIND, "=", true)
                     .findAll();
         } catch (DbException e) {
             e.printStackTrace();
@@ -272,7 +272,6 @@ public class QXDBManager {
 
         try {
             db.update(DeviceBean.class, WhereBuilder.b(DeviceBean.F_USERID, "=", userId), new KeyValue(DeviceBean.F_LANSTATE, false));
-
         } catch (DbException e) {
             e.printStackTrace();
         }
@@ -281,7 +280,7 @@ public class QXDBManager {
 
     public void deleteUnUseDeviceBean(String userId) {
         try {
-            db.delete(DeviceBean.class, WhereBuilder.b(DeviceBean.F_ISWANBIND, "=", false).and(DeviceBean.F_ISLANBIND, "=", false));
+            db.delete(DeviceBean.class, WhereBuilder.b(DeviceBean.F_WANBIND, "=", false).and(DeviceBean.F_LANBIND, "=", false));
         } catch (DbException e) {
             e.printStackTrace();
         }
@@ -425,103 +424,6 @@ public class QXDBManager {
         }
         QXLog.d(TAG, "db currUser = " + first);
         return first;
-    }
-
-
-    //--------------------------- TopicBean -------------------------------
-
-    /**
-     * 查询所有
-     *
-     * @param id userid/sn
-     * @return
-     */
-    public ArrayList<TopicBean> getAllTopic(String id) {
-
-        try {
-            ArrayList<TopicBean> all = (ArrayList<TopicBean>) db.selector(TopicBean.class).where(WhereBuilder.b(TopicBean.F_ID, "=", id)).findAll();
-            return all;
-        } catch (DbException e) {
-            e.printStackTrace();
-            return null;
-        }
-
-    }
-
-    /**
-     * 删除所有
-     *
-     * @param id userid/sn
-     */
-    public void deleteAllTopic(String id) {
-
-        try {
-            db.delete(TopicBean.class, WhereBuilder.b(TopicBean.F_ID, "=", id));
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * 删除所有
-     */
-    public void deleteAllTopic() {
-
-        try {
-            db.delete(TopicBean.class);
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * 添加或更新
-     *
-     * @param topicBean
-     */
-    public void addOrUpdateTopic(TopicBean topicBean) {
-        long t = System.currentTimeMillis();
-        try {
-            TopicBean first = db.selector(TopicBean.class).where(WhereBuilder.b(TopicBean.F_ID, "=", topicBean.getId()).and(TopicBean.F_TOPIC, "=", topicBean.getTopic())).findFirst();
-            topicBean.setTime(System.currentTimeMillis());
-            if (first == null) {
-                db.save(topicBean);
-            } else {
-                topicBean.set_id(first.get_id());
-                db.update(topicBean);
-            }
-            QXLog.d(TAG, "addOrUpdate use time = " + (System.currentTimeMillis() - t));
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * 重置
-     */
-    public void resetTopic(String id) {
-        try {
-            db.update(TopicBean.class, WhereBuilder.b(TopicBean.F_ID, "=", id), new KeyValue(TopicBean.F_TYPE, "remove"));
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
-    }
-
-
-    /**
-     * 删除
-     *
-     * @param id
-     * @param topic
-     */
-    public void deleteTopicByTopic(String id, String topic) {
-        try {
-            db.delete(TopicBean.class, WhereBuilder.b(TopicBean.F_ID, "=", id).and(TopicBean.F_TOPIC, "=", topic));
-        } catch (DbException e) {
-            e.printStackTrace();
-        }
     }
 
 

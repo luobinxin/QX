@@ -13,72 +13,89 @@ import cn.com.startai.qxsdk.QX;
 
 public class QXShareUtils {
 
-    private static String SP_NAME = "qx";
-    private static SharedPreferences sp;
-    private static SharedPreferences.Editor editor;
+
+    private QXShareUtils() {
+    }
+
+    public static QXShareUtils getInstance() {
+        return SingleTonHoulder.singleTonInstance;
+    }
 
 
-    private static void init() {
+    private static class SingleTonHoulder {
+        private static final QXShareUtils singleTonInstance = new QXShareUtils();
+    }
+
+
+    private String SP_NAME = "qx";
+    private SharedPreferences sp;
+    private SharedPreferences.Editor editor;
+
+    public void init(Context context) {
         if (sp == null) {
-            Context context = QX.getInstance().getApp();
             sp = context.getSharedPreferences(SP_NAME, Context.MODE_PRIVATE);
             editor = sp.edit();
         }
     }
 
-    public static void clear() {
-        sp.edit().clear().apply();
+    public void clear() {
+        editor.clear().apply();
     }
 
-    public static void putInt(String key, int value) {
-        init();
+    public void remove(String key) {
+        editor.remove(key).apply();
+    }
+
+    public void putInt(String key, int value) {
+         
         editor.putInt(key, value).apply();
     }
 
-    public static void putBoolean(String key, boolean value) {
-        init();
+    public void putBoolean(String key, boolean value) {
+         
         editor.putBoolean(key, value).apply();
     }
 
-    public static void putFloat(String key, float value) {
-        init();
+    public void putFloat(String key, float value) {
+         
         editor.putFloat(key, value).apply();
     }
 
-    public static void putLong(String key, long value) {
-        init();
+    public void putLong(String key, long value) {
+         
         editor.putLong(key, value).apply();
     }
 
-    public static void putString(String key, String value) {
-        init();
+    public void putString(String key, String value) {
+         
         editor.putString(key, value).apply();
+
     }
 
 
-    public static String getString(String key, String defaultValue) {
-        init();
+    public String getString(String key, String defaultValue) {
+         
         return sp.getString(key, defaultValue);
     }
 
-    public static boolean getBoolean(String key, boolean defaultValue) {
-        init();
+    public boolean getBoolean(String key, boolean defaultValue) {
+         
         return sp.getBoolean(key, defaultValue);
     }
 
-    public static int getInt(String key, int defaultValue) {
-        init();
+    public int getInt(String key, int defaultValue) {
+         
         return sp.getInt(key, defaultValue);
     }
 
-    public static long getLong(String key, long defaultValue) {
-        init();
+    public long getLong(String key, long defaultValue) {
+         
         return sp.getLong(key, defaultValue);
 
     }
 
-    public static float getFloat(String key, float defaultValue) {
-        init();
+    public float getFloat(String key, float defaultValue) {
+         
         return sp.getFloat(key, defaultValue);
     }
 

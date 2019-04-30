@@ -2,6 +2,10 @@ package cn.com.startai.qxsdk.db.bean;
 
 import android.text.TextUtils;
 
+
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xutils.db.annotation.Column;
 import org.xutils.db.annotation.Table;
 
@@ -9,10 +13,11 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.List;
 
-import cn.com.startai.qxsdk.busi.entity.GetUserInfo;
-import cn.com.startai.qxsdk.busi.entity.Login;
-import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
-import cn.com.startai.qxsdk.connect.mqtt.BaseMessage;
+import cn.com.startai.qxsdk.channel.mqtt.busi.IThirdAccountType;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetUserInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Login;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateUserInfo;
+import cn.com.startai.qxsdk.channel.mqtt.BaseMessage;
 import cn.com.startai.qxsdk.utils.QXJsonUtils;
 
 
@@ -22,7 +27,7 @@ import cn.com.startai.qxsdk.utils.QXJsonUtils;
  */
 
 @Table(name = UserBean.TABLE_NAME)
-public class UserBean implements Serializable {
+public class UserBean implements Serializable, IThirdAccountType {
 
     public static final String TABLE_NAME = "UserBean";
 
@@ -262,6 +267,26 @@ public class UserBean implements Serializable {
     }
 
     public List<GetUserInfo.Resp.ContentBean.ThirdInfosBean> getThirdInfoList() {
+        if (thirdInfoList == null) {
+            if (!TextUtils.isEmpty(thirdInfos)) {
+                thirdInfoList = new ArrayList<>();
+                try {
+                    JSONArray jsonArray = new JSONArray(thirdInfos);
+                    if (jsonArray.length() > 0) {
+                        GetUserInfo.Resp.ContentBean.ThirdInfosBean thirdInfosBean = null;
+                        for (int i = 0; i < jsonArray.length(); i++) {
+                            JSONObject jsonObject = (JSONObject) jsonArray.get(i);
+                            thirdInfosBean = new GetUserInfo.Resp.ContentBean.ThirdInfosBean();
+                            thirdInfosBean.setNickName(jsonObject.getString("nickName"));
+                            thirdInfosBean.setType(jsonObject.getInt("type"));
+                            thirdInfoList.add(thirdInfosBean);
+                        }
+                    }
+                } catch (JSONException e) {
+                    e.printStackTrace();
+                }
+            }
+        }
         return thirdInfoList;
     }
 

@@ -1,38 +1,77 @@
 package cn.com.startai.qx.event;
 
+import android.net.NetworkInfo;
+
 import org.greenrobot.eventbus.EventBus;
 
-import cn.com.startai.helper.TAndL;
 import cn.com.startai.qx.utils.EventAction;
 import cn.com.startai.qx.utils.EventBean;
-import cn.com.startai.qxsdk.busi.entity.Activate;
-import cn.com.startai.qxsdk.busi.entity.Bind;
-import cn.com.startai.qxsdk.busi.entity.BindEmail;
-import cn.com.startai.qxsdk.busi.entity.BindMobile;
-import cn.com.startai.qxsdk.busi.entity.BindThirdAccount;
-import cn.com.startai.qxsdk.busi.entity.CheckIdentifyCode;
-import cn.com.startai.qxsdk.busi.entity.GetIdentifyCode;
-import cn.com.startai.qxsdk.busi.entity.GetLatestAppVersion;
-import cn.com.startai.qxsdk.busi.entity.GetUserInfo;
-import cn.com.startai.qxsdk.busi.entity.Login;
-import cn.com.startai.qxsdk.busi.entity.Register;
-import cn.com.startai.qxsdk.busi.entity.ResetLoginPwd;
-import cn.com.startai.qxsdk.busi.entity.SendEmail;
-import cn.com.startai.qxsdk.busi.entity.UnActivate;
-import cn.com.startai.qxsdk.busi.entity.UnBindThirdAccount;
-import cn.com.startai.qxsdk.busi.entity.UpdateDeviceInfo;
-import cn.com.startai.qxsdk.busi.entity.UpdateLoginPwd;
-import cn.com.startai.qxsdk.busi.entity.UpdateRemark;
-import cn.com.startai.qxsdk.busi.entity.UpdateUserInfo;
+import cn.com.startai.qxsdk.busi.common.BindDeviceResp;
+import cn.com.startai.qxsdk.busi.common.ConnectDeviceResp;
+import cn.com.startai.qxsdk.busi.common.GetBindListResp;
+import cn.com.startai.qxsdk.busi.common.PassthroughResp;
+import cn.com.startai.qxsdk.busi.common.UnBindDeviceResp;
+import cn.com.startai.qxsdk.busi.socket.ISocketBusiListener;
+import cn.com.startai.qxsdk.busi.socket.entity.RecoveryResp;
+import cn.com.startai.qxsdk.busi.socket.entity.RenameDeviceResp;
+import cn.com.startai.qxsdk.busi.socket.entity.UpdateVersionResp;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Activate;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindEmail;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindMobile;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BindThirdAccount;
+import cn.com.startai.qxsdk.channel.mqtt.entity.CheckIdentifyCode;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetAlipayAuthInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetIdentifyCode;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetLatestAppVersion;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetRealPayResult;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetUserInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetWeatherInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Login;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Register;
+import cn.com.startai.qxsdk.channel.mqtt.entity.ResetLoginPwd;
+import cn.com.startai.qxsdk.channel.mqtt.entity.SendEmail;
+import cn.com.startai.qxsdk.channel.mqtt.entity.ThirdPaymentUnifiedOrder;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UnActivate;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UnBindThirdAccount;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateDeviceInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateLoginPwd;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateRemark;
+import cn.com.startai.qxsdk.channel.mqtt.entity.UpdateUserInfo;
+import cn.com.startai.qxsdk.channel.BaseData;
 import cn.com.startai.qxsdk.db.bean.DeviceBean;
-import cn.com.startai.qxsdk.event.IQXBusiResultListener;
 import cn.com.startai.qxsdk.global.QXError;
 
 /**
  * Created by Robin on 2019/3/26.
  * 419109715@qq.com 彬影
  */
-public class MyListener implements IQXBusiResultListener {
+public class MyListener implements ISocketBusiListener {
+    /**
+     * 连接设备结果
+     *
+     * @param resp
+     */
+    @Override
+    public void onConnectDeviceResult(ConnectDeviceResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_CONNECT_DEVICE_RESULT, resp));
+    }
+
+    /**
+     * 消息透传结果
+     *
+     * @param resp
+     */
+    @Override
+    public void onPassthroughResult(PassthroughResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_PASSTHROUGH_RESULT, resp));
+
+    }
+
+    @Override
+    public void onMessageArrive(BaseData baseData) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_MSG_ARRIVE, baseData));
+    }
+
     /**
      * 修改备注名结果
      *
@@ -41,6 +80,17 @@ public class MyListener implements IQXBusiResultListener {
     @Override
     public void onUpdateRemarkResult(UpdateRemark.Resp resp) {
         EventBus.getDefault().post(new EventBean(EventAction.ACTION_UPDATE_REMARK_RESULT, resp));
+    }
+
+    /**
+     * 删除好友回调
+     *
+     * @param resp
+     */
+    @Override
+    public void onUnBindResult(UnBindDeviceResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_UNBIND_RESULT, resp));
+
     }
 
     /**
@@ -228,6 +278,16 @@ public class MyListener implements IQXBusiResultListener {
     }
 
     /**
+     * 设备属性状态 变化  包括  ssid rssi bssid 局域网连接状态 ，广域网连接状态 ，绑定状态 等等
+     *
+     * @param deviceBean
+     */
+    @Override
+    public void onDeviceBeanStateChange(DeviceBean deviceBean) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_DEVICEBEAN_STATUS_CHANE, deviceBean));
+    }
+
+    /**
      * 设备激活回调，如果激活成功只会回调一次
      *
      * @param resp
@@ -252,12 +312,11 @@ public class MyListener implements IQXBusiResultListener {
      * 添加好友回调
      *
      * @param resp
-     * @param id        自己的id
-     * @param bebinding 被绑定者 开发者需要持久化，在向对端发送消息时需要携带此bebinding的id
      */
     @Override
-    public void onBindResult(Bind.Resp resp, String id, Bind.Resp.ContentBean.BebindingBean bebinding) {
+    public void onBindResult(BindDeviceResp resp) {
 
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_BIND_RESULT, resp));
     }
 
     /**
@@ -283,6 +342,36 @@ public class MyListener implements IQXBusiResultListener {
     }
 
     /**
+     * 第三方支付 统一下单结果
+     *
+     * @param resp
+     */
+    @Override
+    public void onThirdPaymentUnifiedOrderResult(ThirdPaymentUnifiedOrder.Resp resp) {
+
+    }
+
+    /**
+     * 查询真实订单支付结果
+     *
+     * @param resp
+     */
+    @Override
+    public void onGetRealOrderPayStatus(GetRealPayResult.Resp resp) {
+
+    }
+
+    /**
+     * 查询支付宝认证信息
+     *
+     * @param resp
+     */
+    @Override
+    public void onGetAlipayAuthInfoResult(GetAlipayAuthInfo.Resp resp) {
+
+    }
+
+    /**
      * 绑定手机号返回
      *
      * @param resp
@@ -290,6 +379,16 @@ public class MyListener implements IQXBusiResultListener {
     @Override
     public void onBindMobileNumResult(BindMobile.Resp resp) {
         EventBus.getDefault().post(new EventBean(EventAction.ACTION_BIND_MOBILE_RESULT, resp));
+    }
+
+    /**
+     * 查询天气信息返回
+     *
+     * @param resp
+     */
+    @Override
+    public void onGetWeatherInfoResult(GetWeatherInfo.Resp resp) {
+
     }
 
     /**
@@ -313,6 +412,17 @@ public class MyListener implements IQXBusiResultListener {
     }
 
     /**
+     * 获取绑定列表 分页
+     *
+     * @param resp
+     */
+    @Override
+    public void onGetBindListResult(GetBindListResp resp) {
+
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_GET_BIND_LIST_RESULT, resp));
+    }
+
+    /**
      * 绑定邮箱返回
      *
      * @param resp
@@ -330,5 +440,33 @@ public class MyListener implements IQXBusiResultListener {
     @Override
     public void onLogoutResult(int result) {
         EventBus.getDefault().post(new EventBean(EventAction.ACTION_LOGOUT_RESULT, result));
+    }
+
+    /**
+     * 网络状态变化
+     *
+     * @param networkType
+     * @param state
+     */
+    @Override
+    public void onNetworkChange(String networkType, NetworkInfo.State state) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_NETWORK_CHANGE, networkType, state));
+    }
+
+
+    @Override
+    public void onUpdateVersionResult(UpdateVersionResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_UPDATE_VERSION_RESULT, resp));
+    }
+
+    @Override
+    public void onSettingRecoveryResult(RecoveryResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_RECOVERY_RESULT, resp));
+    }
+
+    @Override
+    public void onDeviceRenameResult(RenameDeviceResp resp) {
+        EventBus.getDefault().post(new EventBean(EventAction.ACTION_RENAME_RESULT, resp));
+
     }
 }

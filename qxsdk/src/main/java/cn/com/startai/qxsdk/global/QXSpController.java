@@ -3,14 +3,11 @@ package cn.com.startai.qxsdk.global;
 import android.text.TextUtils;
 
 import cn.com.startai.qxsdk.QX;
-import cn.com.startai.qxsdk.busi.entity.BrokerHost;
-import cn.com.startai.qxsdk.connect.mqtt.client.QXMqttConfig;
+import cn.com.startai.qxsdk.channel.mqtt.entity.BrokerHost;
+import cn.com.startai.qxsdk.channel.mqtt.client.QXMqttConfig;
 import cn.com.startai.qxsdk.utils.QXJsonUtils;
-import cn.com.startai.qxsdk.utils.QXLog;
 import cn.com.startai.qxsdk.utils.QXShareUtils;
 import cn.com.startai.qxsdk.utils.area.AreaLocation;
-
-import static cn.com.startai.qxsdk.QX.TAG;
 
 
 /**
@@ -31,7 +28,7 @@ public class QXSpController {
      */
     public static long getLastGetBrokerHostrespTime() {
 
-        long aLong = QXShareUtils.getLong(SP_LASTGET_0X800_TIME, 0);
+        long aLong = QXShareUtils.getInstance().getLong(SP_LASTGET_0X800_TIME, 0);
 
         return aLong;
     }
@@ -43,7 +40,7 @@ public class QXSpController {
      */
     public static void setLastGetBrokerHostrespTime(long time) {
 
-        QXShareUtils.putLong(SP_LASTGET_0X800_TIME, time);
+        QXShareUtils.getInstance().putLong(SP_LASTGET_0X800_TIME, time);
 
     }
 
@@ -56,7 +53,7 @@ public class QXSpController {
      */
     public static long getsetLastCheckExpireTime() {
 
-        long aLong = QXShareUtils.getLong(SP_LAST_CHECH_EXPIRE_TIME, 0);
+        long aLong = QXShareUtils.getInstance().getLong(SP_LAST_CHECH_EXPIRE_TIME, 0);
 
         return aLong;
     }
@@ -68,7 +65,7 @@ public class QXSpController {
      */
     public static void setLastCheckExpireTime(long time) {
 
-        QXShareUtils.putLong(SP_LAST_CHECH_EXPIRE_TIME, time);
+        QXShareUtils.getInstance().putLong(SP_LAST_CHECH_EXPIRE_TIME, time);
 
     }
 
@@ -82,7 +79,7 @@ public class QXSpController {
      */
     public static AreaLocation getLocation() {
 
-        String str = QXShareUtils.getString(SP_LOCATION, "");
+        String str = QXShareUtils.getInstance().getString(SP_LOCATION, "");
         if (TextUtils.isEmpty(str)) {
             return null;
         }
@@ -97,9 +94,9 @@ public class QXSpController {
     public static void setLocation(AreaLocation areaLocation) {
         if (areaLocation == null) {
 
-            QXShareUtils.putString(SP_LOCATION, "");
+            QXShareUtils.getInstance().putString(SP_LOCATION, "");
         } else {
-            QXShareUtils.putString(SP_LOCATION, QXJsonUtils.toJson(areaLocation));
+            QXShareUtils.getInstance().putString(SP_LOCATION, QXJsonUtils.toJson(areaLocation));
         }
 
     }
@@ -114,7 +111,7 @@ public class QXSpController {
      */
     public static BrokerHost.Resp.ContentBean getAllAreaNodeBean() {
 
-        String s = QXShareUtils.getString(SP_AREA_NODE, "");
+        String s = QXShareUtils.getInstance().getString(SP_AREA_NODE, "");
         if (TextUtils.isEmpty(s)) {
             return null;
         } else {
@@ -137,11 +134,11 @@ public class QXSpController {
      */
     public static void setAreaNodeBeans(BrokerHost.Resp.ContentBean contentBean) {
         if (contentBean == null) {
-            QXShareUtils.putString(SP_AREA_NODE, "");
+            QXShareUtils.getInstance().putString(SP_AREA_NODE, "");
             return;
         }
         String s = QXJsonUtils.toJson(contentBean);
-        QXShareUtils.putString(SP_AREA_NODE, s);
+        QXShareUtils.getInstance().putString(SP_AREA_NODE, s);
     }
 
 
@@ -153,14 +150,14 @@ public class QXSpController {
      * @return
      */
     public static String getClientid() {
-        return QXShareUtils.getString(SP_CLIENTID, "");
+        return QXShareUtils.getInstance().getString(SP_CLIENTID, "");
     }
 
     /**
      * 保存clientid到本地
      */
     public static void setClientid(String clientid) {
-        QXShareUtils.putString(SP_CLIENTID, clientid);
+        QXShareUtils.getInstance().putString(SP_CLIENTID, clientid);
     }
 
 
@@ -173,7 +170,7 @@ public class QXSpController {
      */
     public static boolean getIsActivite() {
         //如果appid变化了会重新激活
-        boolean aBoolean = QXShareUtils.getBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), false);
+        boolean aBoolean = QXShareUtils.getInstance().getBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), false);
         return aBoolean;
     }
 
@@ -181,7 +178,7 @@ public class QXSpController {
      * 保存激活状态
      */
     public static void setIsActivite(boolean isActivite) {
-        QXShareUtils.putBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), isActivite);
+        QXShareUtils.getInstance().putBoolean(SP_ACTIVITE + QXMqttConfig.getAppid() + QXMqttConfig.getSn(QX.getInstance().getApp()), isActivite);
     }
 
 
@@ -193,19 +190,35 @@ public class QXSpController {
      * @return
      */
     public static String getAppid() {
-        return QXShareUtils.getString(SP_APPID, "");
+        return QXShareUtils.getInstance().getString(SP_APPID, "");
     }
 
     public static void setAppid(String appid) {
 
-        QXShareUtils.putString(SP_APPID, appid);
+        QXShareUtils.getInstance().putString(SP_APPID, appid);
     }
 
+
+    private static final String SP_IS_TOPICSUB = "SP_IS_TOPICSUB";
+
+    public static boolean isSub(String clientid, String topic) {
+        boolean aBoolean = QXShareUtils.getInstance().getBoolean(SP_IS_TOPICSUB + clientid + topic, false);
+        return aBoolean;
+    }
+
+    public static void setIsSub(String clientid, String topic, boolean isSub) {
+        QXShareUtils.getInstance().putBoolean(SP_IS_TOPICSUB + clientid + topic, isSub);
+    }
+
+    public static void removeIsSub(String clientId, String topic) {
+        QXShareUtils.getInstance().remove(SP_IS_TOPICSUB + clientId + topic);
+    }
 
     /**
      * 清除所有sp缓存消息
      */
     public static void clearAllSp() {
-        QXShareUtils.clear();
+
+        QXShareUtils.getInstance().clear();
     }
 }

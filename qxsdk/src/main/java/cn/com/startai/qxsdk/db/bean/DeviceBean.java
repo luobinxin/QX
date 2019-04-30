@@ -7,7 +7,8 @@ import org.xutils.db.annotation.Table;
 
 import java.io.Serializable;
 
-import cn.com.startai.qxsdk.connect.udp.bean.LanDeviceInfo;
+import cn.com.startai.qxsdk.channel.mqtt.entity.Bind;
+import cn.com.startai.qxsdk.channel.mqtt.entity.GetBindList;
 
 
 /**
@@ -16,7 +17,7 @@ import cn.com.startai.qxsdk.connect.udp.bean.LanDeviceInfo;
  */
 
 @Table(name = DeviceBean.TABLE_NAME)
-public class DeviceBean implements Serializable {
+public class DeviceBean implements Serializable, Comparable<DeviceBean> {
 
     public static final String TABLE_NAME = "DeviceBean";
 
@@ -56,25 +57,25 @@ public class DeviceBean implements Serializable {
     private boolean isAdmin; //是否是管理员
     public static final String F_ISADMIN = "isAdmin";
 
-    @Column(name = F_REMOTESTATE)
-    private boolean remoteState;//是否已经远程连接
-    public static final String F_REMOTESTATE = "remoteState";
+    @Column(name = F_WANSTATE)
+    private boolean wanState;//是否已经远程连接
+    public static final String F_WANSTATE = "wanState";
 
     @Column(name = F_BINDNEEDPWD)
     private boolean bindNeedPwd;// 绑定需要密码
     public static final String F_BINDNEEDPWD = "bindNeedPwd";
 
-    @Column(name = F_HASACTIVATE)
-    private boolean hasActivate;// 已经激活
-    public static final String F_HASACTIVATE = "hasActivate";
+    @Column(name = F_ACTIVATESTATE)
+    private boolean activateState;// 已经激活
+    public static final String F_ACTIVATESTATE = "activateState";
 
-    @Column(name = F_ISLANBIND)
-    private boolean isLanBind;//是否已经局域网绑定
-    public static final String F_ISLANBIND = "isLanBind";
+    @Column(name = F_LANBIND)
+    private boolean lanBind;//是否已经局域网绑定
+    public static final String F_LANBIND = "lanBind";
 
-    @Column(name = F_ISWANBIND)
-    private boolean isWanBind;//是否已经广域网绑定
-    public static final String F_ISWANBIND = "isWanBind";
+    @Column(name = F_WANBIND)
+    private boolean wanBind;//是否已经广域网绑定
+    public static final String F_WANBIND = "wanBind";
 
     @Column(name = FILED_PRODUCT)
     private int product;
@@ -92,9 +93,9 @@ public class DeviceBean implements Serializable {
     private String name; //设备名称 （局域网内）在任何手机看都一样的名称
     public static final String F_NAME = "name";
 
-    @Column(name = F_ALIAS)
-    private String alias; //设备别名（同步到云端） 只给自己看的
-    public static final String F_ALIAS = "alias";
+    @Column(name = F_REMARK)
+    private String remark; //设备别名（同步到云端） 只给自己看的
+    public static final String F_REMARK = "remark";
 
     @Column(name = F_IP)
     private String ip; // 局域网内ip
@@ -152,6 +153,15 @@ public class DeviceBean implements Serializable {
     private int token; //数据添加时间
     public static final String F_TOKEN = "token";
 
+
+    @Column(name = F_ISSUB)
+    private boolean isSub; //是否已经添加订阅
+    public static final String F_ISSUB = "isSub";
+
+    @Column(name = F_WEIGHTVALUE)
+    public long weightValue;
+    public static final String F_WEIGHTVALUE = "weightValue";
+
     @Override
     public String toString() {
         return "DeviceBean{" +
@@ -164,16 +174,16 @@ public class DeviceBean implements Serializable {
                 ", subVersion=" + subVersion +
                 ", hasAdmin=" + hasAdmin +
                 ", isAdmin=" + isAdmin +
-                ", remoteState=" + remoteState +
+                ", wanState=" + wanState +
                 ", bindNeedPwd=" + bindNeedPwd +
-                ", hasActivate=" + hasActivate +
-                ", isLanBind=" + isLanBind +
-                ", isWanBind=" + isWanBind +
+                ", activateState=" + activateState +
+                ", lanBind=" + lanBind +
+                ", wanBind=" + wanBind +
                 ", product=" + product +
                 ", customer=" + customer +
                 ", lanState=" + lanState +
                 ", name='" + name + '\'' +
-                ", alias='" + alias + '\'' +
+                ", remark='" + remark + '\'' +
                 ", ip='" + ip + '\'' +
                 ", port=" + port +
                 ", ssid='" + ssid + '\'' +
@@ -187,16 +197,10 @@ public class DeviceBean implements Serializable {
                 ", updateTime=" + updateTime +
                 ", addTime=" + addTime +
                 ", token=" + token +
+                ", isSub=" + isSub +
                 '}';
     }
 
-    public int getToken() {
-        return token;
-    }
-
-    public void setToken(int token) {
-        this.token = token;
-    }
 
     public DeviceBean() {
     }
@@ -211,87 +215,24 @@ public class DeviceBean implements Serializable {
         this.sn = sn;
     }
 
-//    public void fromWanDeviceInfo_8002(Bind.Resp.ContentBean.BebindingBean bebindingBean) {
-//
-//        this.apptype = bebindingBean.getApptype();
-//        this.featureid = bebindingBean.getFeatureid();
-//        this.remoteState = bebindingBean.getConnstatus() == 1;
-//    }
-//
-//    public void fromWanDeviceInfo_8005(GetBindList.Resp.ContentBean contentBean) {
-//
-//
-//        this.sn = contentBean.getId();
-//        this.mac = contentBean.getMac();
-//        this.alias = contentBean.getAlias();
-//        this.apptype = contentBean.getApptype();
-//        this.featureid = contentBean.getFeatureid();
-//        this.remoteState = contentBean.getConnstatus() == 1;
-//
-//    }
+    public void fromWanDeviceInfo_8002(Bind.Resp.ContentBean.BebindingBean bebindingBean) {
 
-    /**
-     * 合并 局域网参数
-     *
-     * @param lanDeviceInfo
-     */
-    public void fromLanDeviceInfo(LanDeviceInfo lanDeviceInfo) {
-        this.cpuInfo = lanDeviceInfo.getCpuInfo();
-        this.mac = lanDeviceInfo.getMac();
-        this.port = lanDeviceInfo.getPort();
-        this.bindNeedPwd = lanDeviceInfo.getBindNeedPwd();
-        this.name = lanDeviceInfo.getName();
-        this.hasActivate = lanDeviceInfo.getHasActivate();
-        this.subVersion = lanDeviceInfo.getSubVersion();
-        this.mainVersion = lanDeviceInfo.getMainVersion();
-        this.ssid = lanDeviceInfo.getSsid();
-        this.rssi = lanDeviceInfo.getRssi();
-        this.sn = lanDeviceInfo.getSn();
-        this.model = lanDeviceInfo.getModel();
-        this.isWanBind = lanDeviceInfo.getIsWanBind();
-        this.isLanBind = lanDeviceInfo.getIsLanBind();
-        this.isAdmin = lanDeviceInfo.getIsAdmin();
-        this.remoteState = lanDeviceInfo.getHasRemote();
-        this.hasAdmin = lanDeviceInfo.getHasAdmin();
-        this.ip = lanDeviceInfo.getIp();
-        this.product = lanDeviceInfo.getProduct();
-        this.customer = lanDeviceInfo.getCustomer();
+        this.apptype = bebindingBean.getApptype();
+        this.featureid = bebindingBean.getFeatureid();
+        this.wanState = bebindingBean.getConnstatus() == 1;
+    }
+
+    public void fromWanDeviceInfo_8005(GetBindList.Resp.ContentBean.FriendBean contentBean) {
+
+        this.sn = contentBean.getId();
+        this.mac = contentBean.getMac();
+        this.remark = contentBean.getAlias();
+        this.apptype = contentBean.getApptype();
+        this.featureid = contentBean.getFeatureid();
+        this.wanState = contentBean.getConnstatus() == 1;
 
     }
 
-    public LanDeviceInfo toLanDeviceInfo() {
-        LanDeviceInfo info = new LanDeviceInfo();
-        info.setCpuInfo(cpuInfo);
-        info.setMac(mac);
-        info.setPort(port);
-        info.setBindNeedPwd(bindNeedPwd);
-        info.setName(name);
-        info.setHasActivate(hasActivate);
-        info.setSubVersion(subVersion);
-        info.setMainVersion(mainVersion);
-        info.setSsid(ssid);
-        info.setRssi(rssi);
-        info.setSn(sn);
-        info.setModel(model);
-        info.setIsWanBind(isWanBind);
-        info.setIsLanBind(isLanBind);
-        info.setIsAdmin(isAdmin);
-        info.setHasRemote(remoteState);
-        info.setHasAdmin(hasAdmin);
-        info.setIp(ip);
-        info.setProduct(product);
-        info.setCustomer(customer);
-
-        return info;
-    }
-
-    public long getAddTime() {
-        return addTime;
-    }
-
-    public void setAddTime(long addTime) {
-        this.addTime = addTime;
-    }
 
     @Override
     public boolean equals(Object o) {
@@ -313,28 +254,28 @@ public class DeviceBean implements Serializable {
 
     }
 
-    public int getProduct() {
-        return product;
+    public long getWeightValue() {
+        return weightValue;
     }
 
-    public void setProduct(int product) {
-        this.product = product;
+    public void setWeightValue(long weightValue) {
+        this.weightValue = weightValue;
     }
 
-    public int getCustomer() {
-        return customer;
+    public boolean isSub() {
+        return isSub;
     }
 
-    public void setCustomer(int customer) {
-        this.customer = customer;
+    public void setSub(boolean sub) {
+        isSub = sub;
     }
 
-    public String getBssid() {
-        return bssid;
+    public long get_id() {
+        return _id;
     }
 
-    public void setBssid(String bssid) {
-        this.bssid = bssid;
+    public void set_id(long _id) {
+        this._id = _id;
     }
 
     public String getUserId() {
@@ -343,30 +284,6 @@ public class DeviceBean implements Serializable {
 
     public void setUserId(String userId) {
         this.userId = userId;
-    }
-
-    public long getWanBindtime() {
-        return wanBindtime;
-    }
-
-    public void setWanBindtime(long wanBindtime) {
-        this.wanBindtime = wanBindtime;
-    }
-
-//    public String getTopic() {
-//        return topic;
-//    }
-
-//    public void setTopic(String topic) {
-//        this.topic = topic;
-//    }
-
-    public long getUpdateTime() {
-        return updateTime;
-    }
-
-    public void setUpdateTime(long updateTime) {
-        this.updateTime = updateTime;
     }
 
     public String getSn() {
@@ -425,46 +342,61 @@ public class DeviceBean implements Serializable {
         isAdmin = admin;
     }
 
-    public boolean isRemoteState() {
-        return remoteState;
+    public boolean isWanState() {
+        return wanState;
     }
 
-    public void setRemoteState(boolean remoteState) {
-        this.remoteState = remoteState;
+    public void setWanState(boolean wanState) {
+        this.wanState = wanState;
     }
 
-    public String getFeatureid() {
-        return featureid;
+    public boolean isBindNeedPwd() {
+        return bindNeedPwd;
     }
 
-    public void setFeatureid(String featureid) {
-        this.featureid = featureid;
+    public void setBindNeedPwd(boolean bindNeedPwd) {
+        this.bindNeedPwd = bindNeedPwd;
     }
 
-    public boolean isHasActivate() {
-        return hasActivate;
+    public boolean isActivateState() {
+        return activateState;
     }
 
-    public void setHasActivate(boolean hasActivate) {
-        this.hasActivate = hasActivate;
+    public void setActivateState(boolean activateState) {
+        this.activateState = activateState;
     }
 
     public boolean isLanBind() {
-        return isLanBind;
+        return lanBind;
     }
 
     public void setLanBind(boolean lanBind) {
-        isLanBind = lanBind;
+        this.lanBind = lanBind;
     }
 
     public boolean isWanBind() {
-        return isWanBind;
+        return wanBind;
     }
 
     public void setWanBind(boolean wanBind) {
-        isWanBind = wanBind;
+        this.wanBind = wanBind;
     }
 
+    public int getProduct() {
+        return product;
+    }
+
+    public void setProduct(int product) {
+        this.product = product;
+    }
+
+    public int getCustomer() {
+        return customer;
+    }
+
+    public void setCustomer(int customer) {
+        this.customer = customer;
+    }
 
     public boolean isLanState() {
         return lanState;
@@ -480,6 +412,14 @@ public class DeviceBean implements Serializable {
 
     public void setName(String name) {
         this.name = name;
+    }
+
+    public String getRemark() {
+        return remark;
+    }
+
+    public void setRemark(String remark) {
+        this.remark = remark;
     }
 
     public String getIp() {
@@ -506,45 +446,20 @@ public class DeviceBean implements Serializable {
         this.ssid = ssid;
     }
 
+    public String getBssid() {
+        return bssid;
+    }
+
+    public void setBssid(String bssid) {
+        this.bssid = bssid;
+    }
+
     public int getRssi() {
         return rssi;
     }
 
     public void setRssi(int rssi) {
         this.rssi = rssi;
-    }
-
-
-    public long getLanBindingtime() {
-        return lanBindingtime;
-    }
-
-    public void setLanBindingtime(long lanBindingtime) {
-        this.lanBindingtime = lanBindingtime;
-    }
-
-    public long get_id() {
-        return _id;
-    }
-
-    public void set_id(long _id) {
-        this._id = _id;
-    }
-
-    public boolean isBindNeedPwd() {
-        return bindNeedPwd;
-    }
-
-    public void setBindNeedPwd(boolean bindNeedPwd) {
-        this.bindNeedPwd = bindNeedPwd;
-    }
-
-    public String getAlias() {
-        return alias;
-    }
-
-    public void setAlias(String alias) {
-        this.alias = alias;
     }
 
     public String getCpuInfo() {
@@ -555,6 +470,14 @@ public class DeviceBean implements Serializable {
         this.cpuInfo = cpuInfo;
     }
 
+    public long getLanBindingtime() {
+        return lanBindingtime;
+    }
+
+    public void setLanBindingtime(long lanBindingtime) {
+        this.lanBindingtime = lanBindingtime;
+    }
+
     public String getApptype() {
         return apptype;
     }
@@ -563,9 +486,49 @@ public class DeviceBean implements Serializable {
         this.apptype = apptype;
     }
 
+    public String getFeatureid() {
+        return featureid;
+    }
+
+    public void setFeatureid(String featureid) {
+        this.featureid = featureid;
+    }
+
+    public long getWanBindtime() {
+        return wanBindtime;
+    }
+
+    public void setWanBindtime(long wanBindtime) {
+        this.wanBindtime = wanBindtime;
+    }
+
+    public long getUpdateTime() {
+        return updateTime;
+    }
+
+    public void setUpdateTime(long updateTime) {
+        this.updateTime = updateTime;
+    }
+
+    public long getAddTime() {
+        return addTime;
+    }
+
+    public void setAddTime(long addTime) {
+        this.addTime = addTime;
+    }
+
+    public int getToken() {
+        return token;
+    }
+
+    public void setToken(int token) {
+        this.token = token;
+    }
+
     public boolean isCanCommunicateByWan() {
 
-        return isRemoteState() && isWanBind();
+        return isWanState() && isWanBind();
     }
 
     public boolean isCanCommunicateByLan() {
@@ -573,6 +536,41 @@ public class DeviceBean implements Serializable {
     }
 
     public boolean isCanCommunicate() {
+
         return isCanCommunicateByLan() || isCanCommunicateByWan();
+    }
+
+    public void checkName() {
+        if (this.name == null) {
+            String tMac = this.mac;
+            if (tMac != null) {
+                tMac = tMac.replace(":", "");
+                if (tMac.length() > 6) {
+                    tMac = "socket" + tMac.substring(6);
+                }
+            }
+            setName(tMac);
+        }
+    }
+
+
+    @Override
+    public int compareTo(DeviceBean o) {
+
+        if (!isCanCommunicate()) {
+            this.setWeightValue(0);
+        }
+
+        if (!o.isCanCommunicate()) {
+            o.setWeightValue(0);
+        }
+
+
+        int i = (int) (o.getWeightValue() - this.weightValue);
+        if (i == 0) {
+            return (int) (o.getUpdateTime() - this.updateTime);
+        } else {
+            return i;
+        }
     }
 }

@@ -62,7 +62,7 @@ dependencies {
     //万能适配器
     api 'com.github.CymChad:BaseRecyclerViewAdapterHelper:2.9.30'
     //bugly 异常统计
-    api 'com.tencent.bugly:crashreport:latest.release'
+    api 'com.tencent.bugly:crashreport:2.8.6.0'
     //图片选择裁剪库
     api 'org.devio.takephoto:takephoto_library:4.1.0'
     //图片加载库
@@ -77,4 +77,5 @@ dependencies {
     //butterknife
     implementation 'com.jakewharton:butterknife:8.2.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.2.1'
+
 }

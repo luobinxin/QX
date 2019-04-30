@@ -288,7 +288,9 @@ public class DeviceInfoManager {
      * @return
      */
     public String getWifiMac(Context context) {
-
+        if(context == null){
+            return "";
+        }
         String wifiMac = "";
         WifiManager mWifiManager = (WifiManager) context.getApplicationContext().getSystemService(Context.WIFI_SERVICE);
         if (mWifiManager != null) {

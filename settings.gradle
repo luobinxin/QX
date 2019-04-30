@@ -1,1 +1,1 @@
-include ':app', ':qxsdk', ':empty'
+include ':app', ':qxsdk', ':qxmqtt', ':common'

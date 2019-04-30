@@ -4,6 +4,7 @@
     package="cn.com.startai.qx">
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
 
     <application
@@ -39,7 +40,9 @@
         <activity android:name=".UpdatePasswordActivity" />
         <activity android:name=".DeviceControlActivity" />
         <activity android:name=".UserInfoActivity" />
+        <activity android:name=".DiscoveryActivity" />
         <activity android:name=".BindMobileOrEmailNumActivity" />
+
 
     </application>
 
